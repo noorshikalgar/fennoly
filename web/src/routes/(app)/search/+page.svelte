@@ -6,8 +6,9 @@
 	import ListPage from '$lib/components/ListPage.svelte';
 	import { t } from '$lib/i18n/index.svelte';
 
-	const q = $derived(page.url.searchParams.get('q') ?? '');
-	const fetch = $derived(() => api.search(q));
+	const q = $derived((page.url.searchParams.get('q') ?? '').trim());
+	// No query: show the hint, never stale results.
+	const fetch = $derived(() => (q ? api.search(q) : Promise.resolve([])));
 </script>
 
 {#key q}
