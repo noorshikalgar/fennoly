@@ -410,6 +410,24 @@ pub fn spaces_snapshot_path(state: &AppState, rel: &str) -> String {
     if rel.is_empty() { root } else { format!("{root}/{rel}") }
 }
 
+/// restic reads `--include` as a glob pattern; this makes `[`, `*` and `?`
+/// in real names match only themselves (a one-character class works the
+/// same on every platform, unlike backslash escapes).
+pub fn glob_literal(path: &str) -> String {
+    let mut out = String::with_capacity(path.len());
+    for c in path.chars() {
+        match c {
+            '[' | '*' | '?' => {
+                out.push('[');
+                out.push(c);
+                out.push(']');
+            }
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 /// Keeps a relative path inside the spaces folder (no `..`, no absolute paths).
 pub fn safe_rel(rel: &str) -> AppResult<String> {
     let rel = rel.trim().trim_matches('/').replace('\\', "/");
@@ -476,7 +494,7 @@ async fn restore_into_folder(
     let dest = destination(state, target)?;
     let tmp = state.storage.restore_dir(run);
     tokio::fs::create_dir_all(&tmp).await?;
-    let includes: Vec<String> = rels.iter().map(|r| spaces_snapshot_path(state, r)).collect();
+    let includes: Vec<String> = rels.iter().map(|r| glob_literal(&spaces_snapshot_path(state, r))).collect();
     let tmp_s = plain(&tmp);
     let mut args = vec!["restore", snapshot, "--target", tmp_s.as_str()];
     for inc in &includes {
@@ -515,7 +533,13 @@ fn import_tree<'a>(
 ) -> std::pin::Pin<Box<dyn std::future::Future<Output = AppResult<()>> + Send + 'a>> {
     Box::pin(async move {
         let name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "restored".into());
-        let meta = tokio::fs::metadata(src).await?;
+        // Not following links: Fennoly never stores any, so a link in a
+        // snapshot could only point somewhere it should not (e.g. /etc).
+        let meta = tokio::fs::symlink_metadata(src).await?;
+        if meta.file_type().is_symlink() || !(meta.is_dir() || meta.is_file()) {
+            tracing::warn!(path = %src.display(), "skipped a link or special file while restoring");
+            return Ok(());
+        }
         if meta.is_dir() {
             let free = crate::access::free_name(state, parent, &fennoly_core::validate_name(&name).unwrap_or_else(|_| "restored".into())).await?;
             let folder = crate::routes::nodes::create_folder_node(state, user, parent, &free).await?;
@@ -529,4 +553,31 @@ fn import_tree<'a>(
         }
         Ok(())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn glob_literal_escapes_pattern_characters() {
+        assert_eq!(glob_literal("/data/spaces/family/Tax 2025"), "/data/spaces/family/Tax 2025");
+        assert_eq!(glob_literal("/d/Photo [1] *best?.jpg"), "/d/Photo [[]1] [*]best[?].jpg");
+    }
+
+    #[test]
+    fn safe_rel_stays_inside() {
+        assert_eq!(safe_rel(" /family/Docs/ ").unwrap(), "family/Docs");
+        assert_eq!(safe_rel(r"users\noor").unwrap(), "users/noor");
+        assert_eq!(safe_rel("").unwrap(), "");
+        for bad in ["..", "family/../../etc", "./x", "C:/Windows", "family/./x"] {
+            assert!(safe_rel(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn plain_strips_verbatim_prefix() {
+        assert_eq!(plain(Path::new(r"\\?\E:\data\spaces")), r"E:\data\spaces");
+        assert_eq!(plain(Path::new("/data/spaces")), "/data/spaces");
+    }
 }
