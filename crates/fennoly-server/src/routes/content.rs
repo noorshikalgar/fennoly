@@ -16,7 +16,7 @@ use uuid::Uuid;
 use zip::CompressionMethod;
 use zip::write::SimpleFileOptions;
 
-use crate::access;
+use crate::access::{self, Resolved};
 use crate::auth::CurrentUser;
 use crate::error::{AppError, AppResult};
 use crate::model::has_thumbnail;
@@ -50,7 +50,7 @@ pub fn content_disposition(kind: &str, name: &str) -> HeaderValue {
 #[derive(Deserialize)]
 pub struct ContentQuery {
     #[serde(default)]
-    download: Option<String>,
+    pub download: Option<String>,
 }
 
 pub async fn content(
@@ -61,12 +61,17 @@ pub async fn content(
     req: Request,
 ) -> AppResult<Response> {
     let r = access::resolve(&state, user.id, id).await?;
+    serve(&r, req, q.download.is_some()).await
+}
+
+/// Serves a file's bytes with range support and safe headers.
+pub async fn serve(r: &Resolved, req: Request, download: bool) -> AppResult<Response> {
     if r.node.is_folder() {
         return Err(AppError::bad("folders are downloaded as zip"));
     }
     let mime = r.node.mime.clone().unwrap_or_else(|| "application/octet-stream".into());
     let risky = DOWNLOAD_ONLY.contains(&mime.as_str());
-    let download = q.download.is_some() || risky;
+    let download = download || risky;
 
     let res = ServeFile::new(&r.path)
         .oneshot(req)
@@ -96,6 +101,12 @@ const MAX_THUMB_SOURCE: u64 = 64 * 1024 * 1024;
 
 pub async fn thumbnail(State(state): State<AppState>, user: CurrentUser, Path(id): Path<Uuid>) -> AppResult<Response> {
     let r = access::resolve(&state, user.id, id).await?;
+    thumbnail_of(&state, &r).await
+}
+
+/// A cached JPEG thumbnail for an image node.
+pub async fn thumbnail_of(state: &AppState, r: &Resolved) -> AppResult<Response> {
+    let id = r.node.id;
     if !has_thumbnail(&r.node) || r.node.size as u64 > MAX_THUMB_SOURCE {
         return Err(AppError::NotFound);
     }
@@ -122,7 +133,7 @@ pub async fn thumbnail(State(state): State<AppState>, user: CurrentUser, Path(id
 
 #[derive(Deserialize)]
 pub struct ZipQuery {
-    ids: String,
+    pub ids: String,
 }
 
 /// File types that are already compressed; storing them is faster and
@@ -159,8 +170,18 @@ fn add_to_zip(zip: &mut zip::ZipWriter<std::fs::File>, path: &FsPath, name: &str
 }
 
 pub async fn zip(State(state): State<AppState>, user: CurrentUser, Query(q): Query<ZipQuery>) -> AppResult<Response> {
-    let ids: Vec<Uuid> = q
-        .ids
+    let ids = parse_ids(&q.ids)?;
+    let mut items: Vec<(PathBuf, String)> = Vec::new();
+    for id in &ids {
+        let r = access::resolve(&state, user.id, *id).await?;
+        items.push((r.path, r.node.name));
+    }
+    zip_response(&state, items).await
+}
+
+/// Parses a comma-separated list of ids (1 to 500).
+pub fn parse_ids(raw: &str) -> AppResult<Vec<Uuid>> {
+    let ids: Vec<Uuid> = raw
         .split(',')
         .filter(|s| !s.is_empty())
         .map(|s| s.parse().map_err(|_| AppError::bad("bad id")))
@@ -168,11 +189,11 @@ pub async fn zip(State(state): State<AppState>, user: CurrentUser, Query(q): Que
     if ids.is_empty() || ids.len() > 500 {
         return Err(AppError::bad("choose between 1 and 500 items"));
     }
-    let mut items: Vec<(PathBuf, String)> = Vec::new();
-    for id in &ids {
-        let r = access::resolve(&state, user.id, *id).await?;
-        items.push((r.path, r.node.name));
-    }
+    Ok(ids)
+}
+
+/// Builds a zip of files and folders and streams it.
+pub async fn zip_response(state: &AppState, items: Vec<(PathBuf, String)>) -> AppResult<Response> {
     let filename = match items.as_slice() {
         [(path, name)] if path.is_dir() => format!("{name}.zip"),
         _ => format!("fennoly-{}.zip", chrono::Local::now().format("%Y-%m-%d")),

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, Download, ExternalLink, Minimize2, Share2, X } from '@lucide/svelte';
+	import { ChevronLeft, ChevronRight, Download, ExternalLink, Link2, Minimize2, Share2, X } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import { contentUrl } from '$lib/api';
-	import { canCompress, canShare, download } from '$lib/actions';
+	import { canCompress, canLink, canShare, download } from '$lib/actions';
 	import { category, formatBytes, formatDateTime, previewable } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { FileNode } from '$lib/types';
@@ -35,7 +35,7 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
-		if (ui.share || ui.compress) return;
+		if (ui.share || ui.compress || ui.link) return;
 		if (e.key === 'Escape') onclose();
 		else if (e.key === 'ArrowLeft') go(-1);
 		else if (e.key === 'ArrowRight') go(1);
@@ -62,6 +62,11 @@
 		{#if canShare(node)}
 			<button class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center" title={t('common.share')} aria-label={t('common.share')} onclick={() => (ui.share = node)}>
 				<Share2 size={19} />
+			</button>
+		{/if}
+		{#if canLink(node)}
+			<button class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center" title={t('links.getLink')} aria-label={t('links.getLink')} onclick={() => (ui.link = node)}>
+				<Link2 size={19} />
 			</button>
 		{/if}
 		<a class="size-10 rounded-full hover:bg-white/10 hidden sm:flex items-center justify-center" href={contentUrl(node.id)} target="_blank" rel="noopener" title={t('viewer.openTab')} aria-label={t('viewer.openTab')}>

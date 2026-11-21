@@ -62,7 +62,7 @@ impl Resolved {
     }
 }
 
-async fn chain(state: &AppState, id: Uuid) -> AppResult<Vec<AncRow>> {
+pub async fn chain(state: &AppState, id: Uuid) -> AppResult<Vec<AncRow>> {
     let rows: Vec<AncRow> = sqlx::query_as(
         "WITH RECURSIVE anc AS (
              SELECT id, parent_id, name, trashed_at, space_id, 0 AS depth FROM nodes WHERE id = $1
@@ -140,6 +140,29 @@ pub async fn resolve(state: &AppState, user_id: Uuid, id: Uuid) -> AppResult<Res
 /// Like [`resolve`], but also finds trashed nodes (for restore and purge).
 pub async fn resolve_with_trash(state: &AppState, user_id: Uuid, id: Uuid) -> AppResult<Resolved> {
     resolve_inner(state, user_id, id, true).await
+}
+
+/// Finds a node reached through a public link rooted at `root`: the node must
+/// be the root or inside it, and nothing on the way may be in the trash.
+pub async fn resolve_in_link(state: &AppState, root: Uuid, id: Uuid) -> AppResult<Resolved> {
+    let node: NodeRow = sqlx::query_as(&format!("SELECT {NODE_COLS} FROM nodes n WHERE n.id = $1"))
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let chain = chain(state, id).await?;
+    let inside = chain.iter().any(|c| c.id == root);
+    let resolved = Resolved { path: disk_path(&state.storage, &chain), node, perm: Permission::Viewer, chain };
+    if !inside || resolved.in_trash() {
+        return Err(AppError::NotFound);
+    }
+    Ok(resolved)
+}
+
+/// May this user create public links for the node? The owner of a personal
+/// item may; in the family space every editor may.
+pub fn can_link(r: &Resolved) -> bool {
+    r.perm == Permission::Owner || (r.space_kind() == "family" && r.perm.can_write())
 }
 
 /// The breadcrumb trail the user may see. People who reach a node through a

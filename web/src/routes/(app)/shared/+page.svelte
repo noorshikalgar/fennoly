@@ -3,6 +3,7 @@
 	import { api } from '$lib/api';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ListPage from '$lib/components/ListPage.svelte';
+	import SharedTabs from '$lib/components/SharedTabs.svelte';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { FileNode } from '$lib/types';
 
@@ -11,6 +12,7 @@
 		(await api.sharedWithMe()).map((s) => ({ ...s, parent_name: null }));
 </script>
 
+<SharedTabs />
 <ListPage title={t('nav.shared')} fetch={fetchShared} showLocation={false}>
 	{#snippet empty()}
 		<EmptyState title={t('shared.empty')} body={t('shared.emptyBody')}>

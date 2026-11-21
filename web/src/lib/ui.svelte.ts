@@ -9,6 +9,7 @@ export const ui = $state<{
 	/** Space of the open folder, for highlighting navigation. */
 	space: 'personal' | 'family' | 'shared' | null;
 	share: FileNode | null;
+	link: FileNode | null;
 	move: FileNode[] | null;
 	compress: FileNode | null;
 	viewer: { items: FileNode[]; index: number } | null;
@@ -18,6 +19,7 @@ export const ui = $state<{
 	folder: null,
 	space: null,
 	share: null,
+	link: null,
 	move: null,
 	compress: null,
 	viewer: null,

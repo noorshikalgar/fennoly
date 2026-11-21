@@ -3,8 +3,12 @@ import type {
 	FileNode,
 	Me,
 	NodeResponse,
+	PublicFolder,
+	PublicInfo,
 	Share,
+	SharedByMeItem,
 	SharedItem,
+	ShareLink,
 	ToolPreview,
 	UserSummary
 } from './types';
@@ -76,6 +80,19 @@ export const api = {
 	updateShare: (shareId: string, permission: string) => patch<Share[]>(`/shares/${shareId}`, { permission }),
 	removeShare: (shareId: string) => del(`/shares/${shareId}`),
 	sharedWithMe: () => get<SharedItem[]>('/shared'),
+	sharedByMe: () => get<SharedByMeItem[]>('/shared-by-me'),
+	stopSharing: (id: string) => del(`/nodes/${id}/sharing`),
+
+	links: (id: string) => get<ShareLink[]>(`/nodes/${id}/links`),
+	createLink: (id: string, b: { allow_download: boolean; password?: string; expires_at?: string | null }) =>
+		post<ShareLink>(`/nodes/${id}/links`, b),
+	updateLink: (linkId: string, b: { allow_download?: boolean; password?: string; expires_at?: string | null }) =>
+		patch<ShareLink>(`/links/${linkId}`, b),
+	deleteLink: (linkId: string) => del(`/links/${linkId}`),
+
+	publicInfo: (token: string) => get<PublicInfo>(`/public/${token}`),
+	publicUnlock: (token: string, password: string) => post(`/public/${token}/unlock`, { password }),
+	publicFolder: (token: string, id: string) => get<PublicFolder>(`/public/${token}/folder/${id}`),
 
 	trashList: () => get<FileNode[]>('/trash'),
 	restore: (id: string) => post<FileNode>(`/trash/${id}/restore`),
@@ -99,3 +116,9 @@ export const contentUrl = (id: string, download = false) =>
 	`/api/nodes/${id}/content${download ? '?download=1' : ''}`;
 export const thumbUrl = (n: FileNode) => `/api/nodes/${n.id}/thumbnail?v=${Date.parse(n.modified_at)}`;
 export const zipUrl = (ids: string[]) => `/api/download/zip?ids=${ids.join(',')}`;
+
+export const linkUrl = (token: string) => `${location.origin}/s/${token}`;
+export const publicContentUrl = (token: string, id: string, download = false) =>
+	`/api/public/${token}/content/${id}${download ? '?download=1' : ''}`;
+export const publicThumbUrl = (token: string, id: string) => `/api/public/${token}/thumbnail/${id}`;
+export const publicZipUrl = (token: string, ids: string[]) => `/api/public/${token}/zip?ids=${ids.join(',')}`;

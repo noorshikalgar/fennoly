@@ -26,6 +26,10 @@ pub enum AppError {
     TooManyRequests,
     #[error("{0}")]
     Unavailable(String),
+    #[error("this link needs a password")]
+    PasswordRequired,
+    #[error("this link has expired")]
+    Expired,
     #[error("internal error")]
     Internal(#[from] anyhow::Error),
 }
@@ -45,6 +49,8 @@ impl AppError {
             AppError::TooLarge(_) => (StatusCode::PAYLOAD_TOO_LARGE, "too_large"),
             AppError::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "rate_limited"),
             AppError::Unavailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "unavailable"),
+            AppError::PasswordRequired => (StatusCode::UNAUTHORIZED, "password_required"),
+            AppError::Expired => (StatusCode::GONE, "expired"),
             AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
         }
     }

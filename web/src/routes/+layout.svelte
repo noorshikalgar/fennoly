@@ -5,6 +5,7 @@
 	import '@fontsource/noto-sans-devanagari/500.css';
 	import '@fontsource/noto-sans-devanagari/600.css';
 	import '@fontsource/noto-sans-devanagari/700.css';
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ApiError, api } from '$lib/api';
@@ -18,10 +19,16 @@
 	let failed = $state(false);
 
 	const PUBLIC = ['/login', '/setup'];
+	/** Public link pages (/s/<token>) work without an account. */
+	const isLinkPage = (path: string) => path.startsWith('/s/');
 
 	async function boot() {
 		failed = false;
 		applyTheme(theme.choice);
+		if (isLinkPage(page.url.pathname)) {
+			ready = true;
+			return;
+		}
 		try {
 			const status = await api.setupStatus();
 			if (status.needs_setup) {
@@ -46,13 +53,15 @@
 		}
 	}
 
+	// Boot once; untrack so theme or URL changes do not re-run it.
 	$effect(() => {
-		boot();
+		untrack(boot);
 	});
 
 	// Leaving the app area after sign-out.
 	$effect(() => {
-		if (ready && !session.me && !PUBLIC.includes(page.url.pathname)) goto('/login');
+		const path = page.url.pathname;
+		if (ready && !session.me && !PUBLIC.includes(path) && !isLinkPage(path)) goto('/login');
 	});
 </script>
 

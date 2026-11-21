@@ -6,6 +6,7 @@
 		Download,
 		EllipsisVertical,
 		FolderInput,
+		Link2,
 		Minimize2,
 		Pencil,
 		Share2,
@@ -18,7 +19,7 @@
 	import type { Snippet } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { thumbUrl } from '$lib/api';
-	import { canCompress, canShare, canWrite, download, openNode, rename, toggleStar, trash } from '$lib/actions';
+	import { canCompress, canLink, canShare, canWrite, download, openNode, rename, toggleStar, trash } from '$lib/actions';
 	import { formatBytes, relativeTime } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import type { FileNode } from '$lib/types';
@@ -143,6 +144,7 @@
 			run: () => download(nodes)
 		});
 		if (one && canShare(one)) list.push({ label: t('common.share'), icon: Share2, run: () => (ui.share = one) });
+		if (one && canLink(one)) list.push({ label: t('links.getLink'), icon: Link2, run: () => (ui.link = one) });
 		if (one)
 			list.push({
 				label: one.starred ? t('common.unstar') : t('common.star'),
@@ -276,6 +278,11 @@
 				{#if selectedNodes.length === 1 && canShare(selectedNodes[0])}
 					<button class="icon-btn" title={t('common.share')} aria-label={t('common.share')} onclick={() => (ui.share = selectedNodes[0])}>
 						<Share2 size={19} />
+					</button>
+				{/if}
+				{#if selectedNodes.length === 1 && canLink(selectedNodes[0])}
+					<button class="icon-btn" title={t('links.getLink')} aria-label={t('links.getLink')} onclick={() => (ui.link = selectedNodes[0])}>
+						<Link2 size={19} />
 					</button>
 				{/if}
 				{#if selectedNodes.every(canWrite)}

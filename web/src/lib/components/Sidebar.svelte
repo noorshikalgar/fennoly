@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, HardDrive, House, Settings, Share2, ShieldCheck, Star, Trash, Users } from '@lucide/svelte';
+	import { Clock, HardDrive, House, Link2, Settings, Share2, ShieldCheck, Star, Trash, Users } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { formatBytes } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
@@ -18,6 +18,7 @@
 		{ href: `/files/${me.home_id}`, label: t('nav.myFiles'), icon: HardDrive, active: path.startsWith('/files') && space === 'personal' },
 		{ href: `/files/${me.family_id}`, label: t('nav.family'), icon: Users, active: path.startsWith('/files') && space === 'family' },
 		{ href: '/shared', label: t('nav.shared'), icon: Share2, active: path === '/shared' || (path.startsWith('/files') && space === 'shared') },
+		{ href: '/shared-by-me', label: t('nav.sharedByMe'), icon: Link2, active: path === '/shared-by-me' },
 		{ href: '/recent', label: t('nav.recent'), icon: Clock, active: path === '/recent' },
 		{ href: '/starred', label: t('nav.starred'), icon: Star, active: path === '/starred' },
 		{ href: '/trash', label: t('nav.trash'), icon: Trash, active: path === '/trash' }

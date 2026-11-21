@@ -179,3 +179,60 @@ pub async fn shared_with_me(State(state): State<AppState>, user: CurrentUser) ->
             .collect(),
     ))
 }
+
+#[derive(Serialize)]
+pub struct SharedByMeItem {
+    node: NodeDto,
+    shares: Vec<ShareRow>,
+    links: Vec<super::links::LinkDto>,
+    last_shared_at: DateTime<Utc>,
+}
+
+/// Everything the current user has shared, with whom and by which links.
+pub async fn shared_by_me(State(state): State<AppState>, user: CurrentUser) -> AppResult<Json<Vec<SharedByMeItem>>> {
+    let rows: Vec<(Uuid, DateTime<Utc>)> = sqlx::query_as(
+        "SELECT x.node_id, max(x.created_at) AS last_shared_at FROM (
+             SELECT node_id, created_at FROM shares WHERE created_by = $1
+             UNION ALL
+             SELECT node_id, created_at FROM links WHERE created_by = $1
+         ) x
+         WHERE node_live(x.node_id) AND node_access(x.node_id, $1) IS NOT NULL
+         GROUP BY x.node_id
+         ORDER BY last_shared_at DESC",
+    )
+    .bind(user.id)
+    .fetch_all(&state.db)
+    .await?;
+    let mut out = Vec::with_capacity(rows.len());
+    for (node_id, last_shared_at) in rows {
+        let shares = shares_of(&state, node_id)
+            .await?
+            .into_iter()
+            .collect::<Vec<_>>();
+        let links = super::links::links_of(&state, node_id).await?;
+        out.push(SharedByMeItem {
+            node: super::nodes::view(&state, user.id, node_id).await?,
+            shares,
+            links,
+            last_shared_at,
+        });
+    }
+    Ok(Json(out))
+}
+
+/// Removes every share and public link on an item the user controls.
+pub async fn stop_sharing(State(state): State<AppState>, user: CurrentUser, Path(id): Path<Uuid>) -> AppResult<Json<Value>> {
+    let r = access::resolve(&state, user.id, id).await?;
+    let can_unshare = r.perm == Permission::Owner;
+    let can_unlink = access::can_link(&r);
+    if !can_unshare && !can_unlink {
+        return Err(AppError::Forbidden);
+    }
+    if can_unshare {
+        sqlx::query("DELETE FROM shares WHERE node_id = $1").bind(id).execute(&state.db).await?;
+    }
+    if can_unlink {
+        sqlx::query("DELETE FROM links WHERE node_id = $1").bind(id).execute(&state.db).await?;
+    }
+    Ok(Json(json!({ "ok": true })))
+}
