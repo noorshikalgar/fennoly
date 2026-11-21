@@ -62,5 +62,10 @@ pub fn api() -> Router<AppState> {
         )
         .layer(DefaultBodyLimit::disable());
 
-    Router::new().merge(json).merge(files).merge(uploads)
+    Router::new()
+        .merge(json)
+        .merge(files)
+        .merge(uploads)
+        // Unknown API paths are a JSON 404, never the web app's index.html.
+        .fallback(|| async { crate::error::AppError::NotFound })
 }
