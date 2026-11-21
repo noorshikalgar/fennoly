@@ -3,10 +3,12 @@
 mod access;
 mod auth;
 mod background;
+mod backup;
 mod config;
 mod error;
 mod model;
 mod routes;
+mod secrets;
 mod spaces;
 mod state;
 mod storage;
@@ -49,7 +51,19 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!("./migrations").run(&db).await.context("database migration failed")?;
 
     let storage = Storage::new(&cfg.data_dir).context("could not prepare the data folder")?;
-    let state = AppState::new(db, cfg.clone(), storage);
+    let secrets = secrets::Secrets::load_or_create(&storage.secrets_key())
+        .context("could not read or create secrets.key in the data folder")?;
+    let state = AppState::new(db, cfg.clone(), storage, secrets);
+    tracing::info!(
+        restic = state.engine.restic.is_some(),
+        rclone = state.engine.rclone.is_some(),
+        "backup engines"
+    );
+    // Before serving requests, so no new run is mistaken for an interrupted one.
+    if let Err(e) = backup::recover_after_restart(&state).await {
+        tracing::warn!(error = %e, "could not tidy up backups after the last shutdown");
+    }
+    backup::spawn_scheduler(state.clone());
     background::spawn(state.clone());
 
     let tools = fennoly_tools::capabilities();

@@ -93,13 +93,20 @@ pub async fn create_folder(
     Path(parent_id): Path<Uuid>,
     Json(req): Json<CreateFolder>,
 ) -> AppResult<Json<NodeDto>> {
-    let parent = access::resolve(&state, user.id, parent_id).await?;
+    let id = create_folder_node(&state, &user, parent_id, &req.name).await?;
+    Ok(Json(view(&state, user.id, id).await?))
+}
+
+/// Creates a folder named `name` in `parent_id` (which `user` must be able to
+/// write to) and returns its id. Fails with Conflict if the name is taken.
+pub(crate) async fn create_folder_node(state: &AppState, user: &CurrentUser, parent_id: Uuid, name: &str) -> AppResult<Uuid> {
+    let parent = access::resolve(state, user.id, parent_id).await?;
     parent.require_write()?;
     if !parent.node.is_folder() {
         return Err(AppError::bad("not a folder"));
     }
-    let name = fennoly_core::validate_name(&req.name)?;
-    if access::sibling_names(&state, parent_id).await?.contains(&name.to_lowercase()) {
+    let name = fennoly_core::validate_name(name)?;
+    if access::sibling_names(state, parent_id).await?.contains(&name.to_lowercase()) {
         return Err(AppError::Conflict("an item with this name already exists".into()));
     }
     let mut tx = state.db.begin().await?;
@@ -115,7 +122,7 @@ pub async fn create_folder(
     .await?;
     tokio::fs::create_dir_all(parent.path.join(&name)).await?;
     tx.commit().await?;
-    Ok(Json(view(&state, user.id, id).await?))
+    Ok(id)
 }
 
 #[derive(Deserialize)]

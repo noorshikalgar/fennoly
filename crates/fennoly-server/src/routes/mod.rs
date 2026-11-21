@@ -2,14 +2,15 @@
 
 mod account;
 mod admin;
+mod backups;
 mod chunked;
 mod content;
 mod links;
-mod nodes;
+pub(crate) mod nodes;
 mod shares;
 mod tools;
 mod trash;
-mod uploads;
+pub(crate) mod uploads;
 
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
@@ -32,6 +33,16 @@ pub fn api() -> Router<AppState> {
         .route("/users", get(account::directory))
         .route("/admin/users", get(admin::list).post(admin::create))
         .route("/admin/users/{id}", patch(admin::update).delete(admin::remove))
+        .route("/admin/backups", get(backups::list).post(backups::create))
+        .route("/admin/backups/status", get(backups::status))
+        .route("/admin/backups/{id}", get(backups::get_one).patch(backups::update).delete(backups::remove))
+        .route("/admin/backups/{id}/test", post(backups::test))
+        .route("/admin/backups/{id}/run", post(backups::run_now))
+        .route("/admin/backups/{id}/runs", get(backups::runs))
+        .route("/admin/backups/{id}/recovery-key", post(backups::recovery_key))
+        .route("/admin/backups/{id}/snapshots", get(backups::snapshots))
+        .route("/admin/backups/{id}/snapshots/{snap}/ls", get(backups::browse))
+        .route("/admin/backups/{id}/snapshots/{snap}/restore", post(backups::restore))
         .route("/nodes/{id}", get(nodes::get_node).patch(nodes::update_node).delete(nodes::trash_node))
         .route("/nodes/{id}/children", get(nodes::children))
         .route("/nodes/{id}/folders", post(nodes::create_folder))

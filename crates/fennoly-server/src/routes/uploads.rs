@@ -119,7 +119,7 @@ pub(super) async fn check_quota(state: &AppState, folder: &Resolved, add: u64) -
     Ok(())
 }
 
-pub(super) async fn blake3_file(path: &FsPath) -> AppResult<String> {
+pub(crate) async fn blake3_file(path: &FsPath) -> AppResult<String> {
     let path = path.to_path_buf();
     let hash = tokio::task::spawn_blocking(move || -> std::io::Result<String> {
         let mut hasher = blake3::Hasher::new();
@@ -147,7 +147,7 @@ async fn finalize(state: &AppState, user: &CurrentUser, upload: &UploadRow) -> A
 
 /// Moves a fully received file from `tmp` into `parent_id` under a free name
 /// based on `filename`, and records it. Shared by every upload protocol.
-pub(super) async fn place_file(
+pub(crate) async fn place_file(
     state: &AppState,
     user: &CurrentUser,
     parent_id: Uuid,

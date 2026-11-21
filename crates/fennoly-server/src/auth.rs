@@ -170,6 +170,19 @@ impl FromRequestParts<AppState> for CurrentUser {
     }
 }
 
+/// Loads an active user outside a request (background jobs acting for them).
+pub async fn user_by_id(state: &AppState, id: Uuid) -> AppResult<CurrentUser> {
+    sqlx::query_as(
+        "SELECT id, username, display_name, role, locale, theme, avatar_color, quota_bytes,
+                '00000000-0000-0000-0000-000000000000'::uuid AS session_id
+         FROM users WHERE id = $1 AND disabled_at IS NULL",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or(AppError::NotFound)
+}
+
 /// A signed-in admin.
 pub struct AdminUser(pub CurrentUser);
 
