@@ -11,6 +11,7 @@ web/dev-dist/
 
 # Runtime data
 /data/
+/data-test/
 *.db
 *.sqlite
 
