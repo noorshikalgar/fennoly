@@ -1,0 +1,11 @@
+[package]
+name = "fennoly-core"
+description = "Domain rules shared by every Fennoly component: names, roles and permissions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
