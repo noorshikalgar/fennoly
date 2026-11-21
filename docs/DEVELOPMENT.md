@@ -38,6 +38,32 @@ scripts/reset-dev.sh                   # wipe the dev database and ./data
 scripts/smoke.sh                       # end-to-end API test (needs a fresh, running server)
 ```
 
+### Sandbox server (keeps your own data safe)
+
+The sandbox uses its own database (`fennoly_test`), data folder (`data-test/`) and build folder
+(`target-test/`), on port 8687:
+
+```bash
+docker compose -f deploy/docker-compose.dev.yml exec postgres createdb -U fennoly fennoly_test   # once
+FENNOLY_DATABASE_URL=postgres://fennoly:fennoly@localhost:54329/fennoly_test FENNOLY_DATA_DIR=./data-test FENNOLY_BIND=127.0.0.1:8687 CARGO_TARGET_DIR=target-test cargo run -p fennoly-server
+scripts/reset-test.sh                       # wipe the sandbox
+scripts/smoke.sh http://127.0.0.1:8687      # full API + chunked upload tests
+```
+
+### Testing bad networks
+
+`scripts/netsim.py` is a proxy that can throttle, cut and black-hole connections:
+
+```bash
+python scripts/netsim.py --listen 8690 --target 127.0.0.1:8687 --control 8691
+FENNOLY_API=http://127.0.0.1:8690 pnpm --dir web exec vite dev --port 5176
+curl "http://127.0.0.1:8691/rate?kbps=2000"         # 2 Mbit/s uplink
+curl "http://127.0.0.1:8691/offline?seconds=180"    # 3-minute outage
+curl "http://127.0.0.1:8691/flaky?p=0.2"            # random connection cuts
+```
+
+See [UPLOADS.md](UPLOADS.md) for how uploads behave and what was tested.
+
 ## Layout
 
 | Path | What lives there |

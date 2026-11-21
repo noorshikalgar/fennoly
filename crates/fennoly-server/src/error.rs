@@ -30,6 +30,8 @@ pub enum AppError {
     PasswordRequired,
     #[error("this link has expired")]
     Expired,
+    #[error("the server's disk is full")]
+    DiskFull,
     #[error("internal error")]
     Internal(#[from] anyhow::Error),
 }
@@ -51,6 +53,7 @@ impl AppError {
             AppError::Unavailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "unavailable"),
             AppError::PasswordRequired => (StatusCode::UNAUTHORIZED, "password_required"),
             AppError::Expired => (StatusCode::GONE, "expired"),
+            AppError::DiskFull => (StatusCode::INSUFFICIENT_STORAGE, "disk_full"),
             AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
         }
     }
@@ -80,6 +83,10 @@ impl From<sqlx::Error> for AppError {
 
 impl From<std::io::Error> for AppError {
     fn from(err: std::io::Error) -> Self {
+        // Running out of space is not a bug: report it so clients stop retrying.
+        if matches!(err.kind(), std::io::ErrorKind::StorageFull | std::io::ErrorKind::QuotaExceeded) {
+            return AppError::DiskFull;
+        }
         AppError::Internal(err.into())
     }
 }

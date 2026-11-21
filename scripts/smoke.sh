@@ -207,3 +207,6 @@ ok "admin api is admin-only; disabling a user ends their sessions"
 
 rm -rf "$WORK"
 echo "All $pass checks passed."
+
+# Chunked upload protocol (needs web/node_modules for hash-wasm).
+(cd "$(dirname "$0")/../web" && node scripts/chunked-test.mjs "$BASE" noor supersecret1)

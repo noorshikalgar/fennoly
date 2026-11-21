@@ -99,6 +99,13 @@ export const api = {
 	purge: (id: string) => del(`/trash/${id}`),
 	emptyTrash: () => del<{ deleted: number }>('/trash'),
 
+	chunkedPlan: (b: { parent_id: string; filename: string; size: number; chunk_size: number; chunk_hashes: string[] }) =>
+		post<{ id: string; chunk_size: number; chunk_count: number; missing: number[]; resumed: boolean }>('/chunked', b),
+	chunkedStatus: (id: string) =>
+		get<{ missing: number[]; chunk_count: number; done: boolean; node_id: string | null }>(`/chunked/${id}`),
+	chunkedFinish: (id: string) => post<{ node_id: string }>(`/chunked/${id}/finish`),
+	chunkedCancel: (id: string) => del(`/chunked/${id}`),
+
 	tools: () => get<{ image: boolean; pdf: boolean }>('/tools'),
 	toolPreview: (b: { node_id: string; tool: 'image' | 'pdf'; quality?: number; max_dimension?: number | null; strength?: number }) =>
 		post<ToolPreview>('/tools/preview', b),

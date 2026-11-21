@@ -85,7 +85,7 @@ async fn load(state: &AppState, user: &CurrentUser, id: Uuid) -> AppResult<Uploa
 }
 
 /// The folder an upload goes into, checked for write access.
-async fn target_folder(state: &AppState, user: &CurrentUser, parent_id: &str) -> AppResult<Resolved> {
+pub(super) async fn target_folder(state: &AppState, user: &CurrentUser, parent_id: &str) -> AppResult<Resolved> {
     let id: Uuid = parent_id.parse().map_err(|_| AppError::bad("bad parentId"))?;
     let parent = access::resolve(state, user.id, id).await?;
     parent.require_write()?;
@@ -95,7 +95,7 @@ async fn target_folder(state: &AppState, user: &CurrentUser, parent_id: &str) ->
     Ok(parent)
 }
 
-fn check_size(state: &AppState, size: u64) -> AppResult<()> {
+pub(super) fn check_size(state: &AppState, size: u64) -> AppResult<()> {
     if size > state.cfg.max_upload_bytes {
         return Err(AppError::TooLarge("this file is larger than the server allows".into()));
     }
@@ -103,7 +103,7 @@ fn check_size(state: &AppState, size: u64) -> AppResult<()> {
 }
 
 /// Personal spaces may have a quota; the family space does not.
-async fn check_quota(state: &AppState, folder: &Resolved, add: u64) -> AppResult<()> {
+pub(super) async fn check_quota(state: &AppState, folder: &Resolved, add: u64) -> AppResult<()> {
     let owner: Option<(Uuid, Option<i64>)> = sqlx::query_as(
         "SELECT u.id, u.quota_bytes FROM spaces s JOIN users u ON u.id = s.owner_id WHERE s.id = $1",
     )
@@ -119,7 +119,7 @@ async fn check_quota(state: &AppState, folder: &Resolved, add: u64) -> AppResult
     Ok(())
 }
 
-async fn blake3_file(path: &FsPath) -> AppResult<String> {
+pub(super) async fn blake3_file(path: &FsPath) -> AppResult<String> {
     let path = path.to_path_buf();
     let hash = tokio::task::spawn_blocking(move || -> std::io::Result<String> {
         let mut hasher = blake3::Hasher::new();
@@ -130,17 +130,34 @@ async fn blake3_file(path: &FsPath) -> AppResult<String> {
     Ok(hash)
 }
 
-/// Turns a finished upload into a file in its folder. Returns the node id.
+/// Turns a finished tus upload into a file in its folder. Returns the node id.
 async fn finalize(state: &AppState, user: &CurrentUser, upload: &UploadRow) -> AppResult<Uuid> {
     let parent_id = upload.parent_id.ok_or_else(|| AppError::bad("upload has no folder"))?;
-    let parent = target_folder(state, user, &parent_id.to_string()).await?;
-    let wanted = upload
-        .filename
-        .as_deref()
-        .and_then(|f| fennoly_core::validate_name(f).ok())
-        .unwrap_or_else(|| "upload".to_string());
     let tmp = state.storage.upload_file(upload.id);
     let hash = blake3_file(&tmp).await?;
+    let name = upload.filename.as_deref().unwrap_or("upload");
+    let node_id = place_file(state, user, parent_id, name, &tmp, upload.length, &hash).await?;
+    sqlx::query("UPDATE uploads SET completed_at = now(), node_id = $1 WHERE id = $2")
+        .bind(node_id)
+        .bind(upload.id)
+        .execute(&state.db)
+        .await?;
+    Ok(node_id)
+}
+
+/// Moves a fully received file from `tmp` into `parent_id` under a free name
+/// based on `filename`, and records it. Shared by every upload protocol.
+pub(super) async fn place_file(
+    state: &AppState,
+    user: &CurrentUser,
+    parent_id: Uuid,
+    filename: &str,
+    tmp: &FsPath,
+    length: i64,
+    hash: &str,
+) -> AppResult<Uuid> {
+    let parent = target_folder(state, user, &parent_id.to_string()).await?;
+    let wanted = fennoly_core::validate_name(filename).unwrap_or_else(|_| "upload".to_string());
     let mime = mime_guess::from_path(&wanted).first_or_octet_stream().essence_str().to_string();
 
     let mut attempt = 0;
@@ -156,17 +173,17 @@ async fn finalize(state: &AppState, user: &CurrentUser, upload: &UploadRow) -> A
         .bind(parent.node.space_id)
         .bind(parent_id)
         .bind(&name)
-        .bind(upload.length)
+        .bind(length)
         .bind(&mime)
-        .bind(&hash)
+        .bind(hash)
         .bind(user.id)
         .fetch_one(&mut *tx)
         .await;
         match inserted {
             Ok(id) => {
-                move_path(&tmp, &dest).await?;
+                move_path(tmp, &dest).await?;
                 if let Err(e) = tx.commit().await {
-                    let _ = move_path(&dest, &tmp).await;
+                    let _ = move_path(&dest, tmp).await;
                     return Err(e.into());
                 }
                 break id;
@@ -176,11 +193,6 @@ async fn finalize(state: &AppState, user: &CurrentUser, upload: &UploadRow) -> A
             Err(e) => return Err(e.into()),
         }
     };
-    sqlx::query("UPDATE uploads SET completed_at = now(), node_id = $1 WHERE id = $2")
-        .bind(node_id)
-        .bind(upload.id)
-        .execute(&state.db)
-        .await?;
     sqlx::query("UPDATE nodes SET modified_at = now() WHERE id = $1")
         .bind(parent_id)
         .execute(&state.db)
