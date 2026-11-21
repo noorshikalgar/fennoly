@@ -5,6 +5,7 @@ name: fennoly-dev
 services:
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: fennoly
       POSTGRES_PASSWORD: fennoly

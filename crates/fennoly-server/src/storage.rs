@@ -4,7 +4,8 @@
 //! <data>/spaces/family/...          the family space, as a plain folder tree
 //! <data>/spaces/users/<name>/...    each personal space
 //! <data>/trash/<node id>            trashed files and folders
-//! <data>/tmp/uploads/<upload id>    uploads in progress
+//! <data>/tmp/uploads/<upload id>    tus uploads in progress
+//! <data>/tmp/chunked/<upload id>    chunked uploads in progress
 //! <data>/cache/thumbs/              generated thumbnails
 //! <data>/cache/tools/               compress previews waiting to be kept
 //! ```
@@ -25,7 +26,7 @@ pub struct Storage {
 impl Storage {
     pub fn new(root: impl Into<PathBuf>) -> std::io::Result<Self> {
         let root = root.into();
-        for dir in ["spaces", "trash", "tmp/uploads", "cache/thumbs", "cache/tools"] {
+        for dir in ["spaces", "trash", "tmp/uploads", "tmp/chunked", "cache/thumbs", "cache/tools"] {
             std::fs::create_dir_all(root.join(dir))?;
         }
         let root = std::fs::canonicalize(&root)?;
@@ -46,6 +47,11 @@ impl Storage {
 
     pub fn upload_file(&self, upload_id: Uuid) -> PathBuf {
         self.root.join("tmp").join("uploads").join(upload_id.to_string())
+    }
+
+    /// A chunked upload's pre-sized file, filled chunk by chunk.
+    pub fn chunked_file(&self, upload_id: Uuid) -> PathBuf {
+        self.root.join("tmp").join("chunked").join(upload_id.to_string())
     }
 
     pub fn tmp_dir(&self) -> PathBuf {

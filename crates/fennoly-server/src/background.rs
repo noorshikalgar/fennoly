@@ -60,6 +60,19 @@ pub async fn run_once(state: &AppState) -> anyhow::Result<()> {
         remove_path(&state.storage.upload_file(id)).await?;
     }
 
+    // Interrupted chunked uploads are kept 3 days so they can be resumed.
+    let abandoned: Vec<Uuid> = sqlx::query_scalar(
+        "DELETE FROM chunked_uploads
+         WHERE (completed_at IS NULL AND updated_at < now() - interval '3 days')
+            OR (completed_at IS NOT NULL AND completed_at < now() - interval '1 day')
+         RETURNING id",
+    )
+    .fetch_all(&state.db)
+    .await?;
+    for id in abandoned {
+        remove_path(&state.storage.chunked_file(id)).await?;
+    }
+
     sqlx::query("DELETE FROM sessions WHERE expires_at < now()").execute(&state.db).await?;
     remove_old_files(state.storage.tools_dir(), Duration::from_secs(3600)).await?;
     remove_old_files(state.storage.thumbs_dir(), Duration::from_secs(30 * 24 * 3600)).await?;

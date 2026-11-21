@@ -2,6 +2,7 @@
 
 mod account;
 mod admin;
+mod chunked;
 mod content;
 mod links;
 mod nodes;
@@ -71,6 +72,10 @@ pub fn api() -> Router<AppState> {
             "/uploads/{id}",
             patch(uploads::patch).head(uploads::head).delete(uploads::terminate),
         )
+        .route("/chunked", post(chunked::plan))
+        .route("/chunked/{id}", get(chunked::status).delete(chunked::cancel))
+        .route("/chunked/{id}/chunks/{index}", put(chunked::put_chunk))
+        .route("/chunked/{id}/finish", post(chunked::finish))
         .layer(DefaultBodyLimit::disable());
 
     Router::new()
