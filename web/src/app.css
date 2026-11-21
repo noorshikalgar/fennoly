@@ -6,16 +6,17 @@
    the Tailwind colours mapped below (bg-surface, text-muted, ...). */
 :root,
 [data-theme='light'] {
-	--bg: #f6f6fa;
+	/* Brand: sprout teal (#0F6E56) on soft, slightly green neutrals. */
+	--bg: #f4f7f5;
 	--surface: #ffffff;
-	--surface-2: #f0f0f6;
-	--surface-3: #e7e7f0;
-	--border: #e3e3ec;
-	--text: #16161d;
-	--muted: #6a6a7c;
-	--primary: #4f46e5;
-	--primary-hover: #4338ca;
-	--primary-soft: #eef0ff;
+	--surface-2: #edf2ef;
+	--surface-3: #e2e9e5;
+	--border: #dfe7e3;
+	--text: #13201b;
+	--muted: #5e6e67;
+	--primary: #0f6e56;
+	--primary-hover: #085041;
+	--primary-soft: #e1f5ee;
 	--on-primary: #ffffff;
 	--danger: #dc2626;
 	--danger-soft: #fef2f2;
@@ -27,17 +28,17 @@
 }
 
 [data-theme='dark'] {
-	--bg: #0e0e13;
-	--surface: #16161d;
-	--surface-2: #1e1e27;
-	--surface-3: #282833;
-	--border: #2a2a35;
-	--text: #ececf2;
-	--muted: #9b9bad;
-	--primary: #8b8cf8;
-	--primary-hover: #a5a6fb;
-	--primary-soft: #25254a;
-	--on-primary: #0e0e13;
+	--bg: #0c1210;
+	--surface: #131b18;
+	--surface-2: #1a2420;
+	--surface-3: #232f2a;
+	--border: #26322d;
+	--text: #e8f0ec;
+	--muted: #93a69d;
+	--primary: #5dcaa5;
+	--primary-hover: #9fe1cb;
+	--primary-soft: #0e3a2f;
+	--on-primary: #04342c;
 	--danger: #f87171;
 	--danger-soft: #3a1717;
 	--success: #4ade80;

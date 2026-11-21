@@ -16,7 +16,7 @@
 	let { node, size = 24 }: { node: Pick<FileNode, 'kind' | 'mime' | 'name'>; size?: number } = $props();
 
 	const styles = {
-		folder: { icon: Folder, color: '#6366f1' },
+		folder: { icon: Folder, color: '#1d9e75' },
 		image: { icon: FileImage, color: '#ec4899' },
 		pdf: { icon: FileText, color: '#ef4444' },
 		video: { icon: FilePlay, color: '#8b5cf6' },
