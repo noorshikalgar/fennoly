@@ -93,7 +93,7 @@
 	{#if loaded && !recent.length}
 		<div class="card p-8 text-center text-muted">{t('home.noRecent')}</div>
 	{:else}
-		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
 			{#each recent.slice(0, 12) as node (node.id)}
 				<button class="card overflow-hidden text-left hover:-translate-y-0.5 transition-transform" onclick={() => openNode(node, recent)}>
 					<div class="aspect-[4/3] bg-surface-2 flex items-center justify-center overflow-hidden">

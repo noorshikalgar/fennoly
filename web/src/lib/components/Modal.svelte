@@ -67,7 +67,9 @@
 			{@render children()}
 		</div>
 		{#if footer}
-			<div class="flex flex-wrap justify-end gap-2 px-5 py-4 border-t border-border pb-[max(1rem,env(safe-area-inset-bottom))]">
+			<!-- On phones, footer buttons share the row equally for easy tapping. -->
+			<div class="flex flex-wrap justify-end gap-2 px-5 py-4 border-t border-border pb-[max(1rem,env(safe-area-inset-bottom))]
+				max-sm:[&>*]:flex-1 max-sm:[&>*]:min-w-[8rem]">
 				{@render footer()}
 			</div>
 		{/if}

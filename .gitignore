@@ -31,3 +31,6 @@ Thumbs.db
 # Docker Compose volumes
 deploy/fennoly-data/
 deploy/fennoly-db/
+
+# Local helper binaries (restic, rclone) for development
+/tools/
