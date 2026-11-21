@@ -1,0 +1,9 @@
+target
+data
+web/node_modules
+web/.svelte-kit
+web/build
+deploy/fennoly-data
+deploy/fennoly-db
+.env
+.git
