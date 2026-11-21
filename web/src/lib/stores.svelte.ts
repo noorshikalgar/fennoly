@@ -1,5 +1,6 @@
+import { api } from './api';
 import { setLocale } from './i18n/index.svelte';
-import type { Me, ThemeChoice } from './types';
+import type { BackupStatus, Me, ThemeChoice } from './types';
 
 // ---- Session -------------------------------------------------------------
 
@@ -75,3 +76,24 @@ export function folderChanged(folderId: string) {
 	changes.folder = folderId;
 	changes.version++;
 }
+
+// ---- Backup health (admins) ------------------------------------------------
+
+class BackupHealth {
+	value = $state<BackupStatus | null>(null);
+
+	/** Reloads the summary behind the "backups need attention" banner. */
+	async refresh() {
+		if (session.me?.role !== 'admin') {
+			this.value = null;
+			return;
+		}
+		try {
+			this.value = await api.backupStatus();
+		} catch {
+			/* keep the last known state */
+		}
+	}
+}
+
+export const backupStatus = new BackupHealth();

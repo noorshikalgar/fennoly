@@ -20,10 +20,15 @@ services:
       FENNOLY_SECURE_COOKIES: "false"
       FENNOLY_MAX_UPLOAD_GB: "50"
       FENNOLY_TRASH_DAYS: "30"
+      # Backup schedules ("every day at 02:00") use this time zone.
+      TZ: Asia/Kolkata
     ports:
       - "8686:8686"
     volumes:
       - ./fennoly-data:/data
+      # A USB drive or second disk for backups: uncomment, then in
+      # Backups → "USB drive or folder" use the path /backups.
+      # - /mnt/usb-backup:/backups
 
   postgres:
     image: postgres:17-alpine
