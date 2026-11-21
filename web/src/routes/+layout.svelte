@@ -1,0 +1,74 @@
+<script lang="ts">
+	import '../app.css';
+	import '@fontsource-variable/inter';
+	import '@fontsource/noto-sans-devanagari/400.css';
+	import '@fontsource/noto-sans-devanagari/500.css';
+	import '@fontsource/noto-sans-devanagari/600.css';
+	import '@fontsource/noto-sans-devanagari/700.css';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { ApiError, api } from '$lib/api';
+	import Dialogs from '$lib/components/Dialogs.svelte';
+	import Toasts from '$lib/components/Toasts.svelte';
+	import { t } from '$lib/i18n/index.svelte';
+	import { adoptPreferences, applyTheme, session, theme } from '$lib/stores.svelte';
+
+	let { children } = $props();
+	let ready = $state(false);
+	let failed = $state(false);
+
+	const PUBLIC = ['/login', '/setup'];
+
+	async function boot() {
+		failed = false;
+		applyTheme(theme.choice);
+		try {
+			const status = await api.setupStatus();
+			if (status.needs_setup) {
+				if (page.url.pathname !== '/setup') await goto('/setup', { replace: true });
+				ready = true;
+				return;
+			}
+			try {
+				adoptPreferences(await api.me());
+				if (PUBLIC.includes(page.url.pathname)) await goto('/', { replace: true });
+			} catch (e) {
+				if (!(e instanceof ApiError && e.status === 401)) throw e;
+				session.me = null;
+				if (!PUBLIC.includes(page.url.pathname) || page.url.pathname === '/setup') {
+					const next = page.url.pathname === '/' ? '' : `?next=${encodeURIComponent(page.url.pathname + page.url.search)}`;
+					await goto(`/login${next}`, { replace: true });
+				}
+			}
+			ready = true;
+		} catch {
+			failed = true;
+		}
+	}
+
+	$effect(() => {
+		boot();
+	});
+
+	// Leaving the app area after sign-out.
+	$effect(() => {
+		if (ready && !session.me && !PUBLIC.includes(page.url.pathname)) goto('/login');
+	});
+</script>
+
+{#if ready}
+	{@render children()}
+{:else if failed}
+	<div class="min-h-dvh flex flex-col items-center justify-center gap-4 p-6 text-center">
+		<img src="/icons/icon.svg" alt="" class="size-14" />
+		<p class="text-muted">{t('errors.network')}</p>
+		<button class="btn-primary" onclick={boot}>{t('common.retry')}</button>
+	</div>
+{:else}
+	<div class="min-h-dvh flex items-center justify-center">
+		<img src="/icons/icon.svg" alt="Fennoly" class="size-14 animate-pulse" />
+	</div>
+{/if}
+
+<Toasts />
+<Dialogs />

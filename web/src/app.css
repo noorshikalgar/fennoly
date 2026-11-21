@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Design tokens. Every theme sets the same variables; components only use
+   the Tailwind colours mapped below (bg-surface, text-muted, ...). */
+:root,
+[data-theme='light'] {
+	--bg: #f6f6fa;
+	--surface: #ffffff;
+	--surface-2: #f0f0f6;
+	--surface-3: #e7e7f0;
+	--border: #e3e3ec;
+	--text: #16161d;
+	--muted: #6a6a7c;
+	--primary: #4f46e5;
+	--primary-hover: #4338ca;
+	--primary-soft: #eef0ff;
+	--on-primary: #ffffff;
+	--danger: #dc2626;
+	--danger-soft: #fef2f2;
+	--success: #16a34a;
+	--warning: #d97706;
+	--shadow: 0 1px 2px rgb(16 16 30 / 0.06), 0 8px 24px rgb(16 16 30 / 0.06);
+	--overlay: rgb(10 10 20 / 0.45);
+	color-scheme: light;
+}
+
+[data-theme='dark'] {
+	--bg: #0e0e13;
+	--surface: #16161d;
+	--surface-2: #1e1e27;
+	--surface-3: #282833;
+	--border: #2a2a35;
+	--text: #ececf2;
+	--muted: #9b9bad;
+	--primary: #8b8cf8;
+	--primary-hover: #a5a6fb;
+	--primary-soft: #25254a;
+	--on-primary: #0e0e13;
+	--danger: #f87171;
+	--danger-soft: #3a1717;
+	--success: #4ade80;
+	--warning: #fbbf24;
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+	--overlay: rgb(0 0 0 / 0.6);
+	color-scheme: dark;
+}
+
+[data-theme='saffron'] {
+	--bg: #fcf7ef;
+	--surface: #fffdf9;
+	--surface-2: #f8eedf;
+	--surface-3: #f1e1c9;
+	--border: #ecdcc3;
+	--text: #2a1c0d;
+	--muted: #87694b;
+	--primary: #d9620f;
+	--primary-hover: #b9520a;
+	--primary-soft: #fdebd6;
+	--on-primary: #ffffff;
+	--danger: #c0262d;
+	--danger-soft: #fdeceb;
+	--success: #2f7d32;
+	--warning: #b45309;
+	--shadow: 0 1px 2px rgb(60 30 0 / 0.07), 0 8px 24px rgb(60 30 0 / 0.07);
+	--overlay: rgb(40 20 0 / 0.45);
+	color-scheme: light;
+}
+
+@theme inline {
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-surface-3: var(--surface-3);
+	--color-border: var(--border);
+	--color-text: var(--text);
+	--color-muted: var(--muted);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-soft: var(--primary-soft);
+	--color-on-primary: var(--on-primary);
+	--color-danger: var(--danger);
+	--color-danger-soft: var(--danger-soft);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--shadow-card: var(--shadow);
+	--font-sans: 'Inter Variable', 'Noto Sans Devanagari', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+	background: var(--bg);
+	color: var(--text);
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	@apply font-sans antialiased;
+	min-height: 100dvh;
+}
+
+/* Devanagari reads better a touch larger. */
+html:lang(hi) body,
+html:lang(mr) body {
+	font-size: 1.03rem;
+}
+
+:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: 2px;
+}
+
+::selection {
+	background: var(--primary-soft);
+}
+
+/* Reusable building blocks. Declared as utilities so they can be combined
+   with other classes and overridden (e.g. `btn-primary h-12`). */
+@utility btn {
+	@apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-medium
+		transition-colors select-none whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none;
+}
+@utility btn-primary {
+	@apply btn bg-primary text-on-primary hover:bg-primary-hover;
+}
+@utility btn-ghost {
+	@apply btn text-text hover:bg-surface-2;
+}
+@utility btn-outline {
+	@apply btn border border-border bg-surface text-text hover:bg-surface-2;
+}
+@utility btn-danger {
+	@apply btn bg-danger text-white hover:opacity-90;
+}
+@utility icon-btn {
+	@apply inline-flex items-center justify-center rounded-full size-9 text-muted transition-colors
+		hover:bg-surface-2 hover:text-text;
+}
+@utility input {
+	@apply w-full h-11 rounded-xl border border-border bg-surface px-3.5 text-text text-[0.95rem] transition
+		placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15;
+}
+@utility label {
+	@apply block text-sm font-medium text-text mb-1.5;
+}
+@utility card {
+	@apply rounded-2xl bg-surface border border-border shadow-card;
+}
