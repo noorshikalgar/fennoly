@@ -10,7 +10,7 @@
 	import SharedTabs from '$lib/components/SharedTabs.svelte';
 	import { formatDate, relativeTime } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
-	import { changes, session, toast } from '$lib/stores.svelte';
+	import { changes, toast } from '$lib/stores.svelte';
 	import type { SharedByMeItem } from '$lib/types';
 	import { confirmDialog, ui } from '$lib/ui.svelte';
 
@@ -71,7 +71,7 @@
 		{#snippet icon()}<Share2 size={36} />{/snippet}
 	</EmptyState>
 {:else}
-	<ul class="grid gap-3 mt-4 pb-24 lg:pb-8">
+	<ul class="grid grid-cols-1 gap-3 mt-4 pb-24 lg:pb-8">
 		{#each items as item (item.node.id)}
 			{@const n = item.node}
 			<li class="card p-4">
@@ -82,7 +82,7 @@
 					<div class="flex-1 min-w-0">
 						<button class="block max-w-full truncate font-semibold text-left hover:underline" onclick={() => openNode(n)}>{n.name}</button>
 						<div class="text-xs text-muted truncate">
-							{n.space_kind === 'family' ? t('space.family') : t('space.myFiles')}{n.parent_name && n.parent_id !== session.me?.home_id && n.parent_id !== session.me?.family_id ? ` › ${n.parent_name}` : ''}
+							{n.space_kind === 'family' ? t('space.family') : t('space.myFiles')}{n.parent_name && !n.parent_is_root ? ` › ${n.parent_name}` : ''}
 							· {t('sharedByMe.sharedOn', { when: relativeTime(item.last_shared_at) })}
 						</div>
 					</div>
