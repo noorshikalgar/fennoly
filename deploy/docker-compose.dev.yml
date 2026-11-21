@@ -1,0 +1,23 @@
+# Development database only. The server and web app run on the host.
+#   docker compose -f deploy/docker-compose.dev.yml up -d
+name: fennoly-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: fennoly
+      POSTGRES_PASSWORD: fennoly
+      POSTGRES_DB: fennoly
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - fennoly-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fennoly"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  fennoly-dev-db:
