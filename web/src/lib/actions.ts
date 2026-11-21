@@ -16,7 +16,28 @@ export function reportError(e: unknown) {
 }
 
 export const canWrite = (n: FileNode) => n.permission === 'owner' || n.permission === 'editor';
-export const canShare = (n: FileNode) => n.permission === 'owner';
+export const canShare = (n: FileNode) => n.permission === 'owner' && n.space_kind !== 'family';
+/** Owners can link their items; in the family space every editor can. */
+export const canLink = (n: FileNode) => n.permission === 'owner' || (n.space_kind === 'family' && canWrite(n));
+
+/** Copies text, falling back to a hidden textarea where the Clipboard API is
+ * unavailable (plain http on a home network is not a "secure context"). */
+export async function copyText(text: string): Promise<boolean> {
+	try {
+		await navigator.clipboard.writeText(text);
+		return true;
+	} catch {
+		const area = document.createElement('textarea');
+		area.value = text;
+		area.style.position = 'fixed';
+		area.style.opacity = '0';
+		document.body.appendChild(area);
+		area.select();
+		const ok = document.execCommand('copy');
+		area.remove();
+		return ok;
+	}
+}
 export const canCompress = (n: FileNode) =>
 	n.kind === 'file' && canWrite(n) && (n.mime === 'application/pdf' || (category(n) === 'image' && n.mime !== 'image/svg+xml'));
 

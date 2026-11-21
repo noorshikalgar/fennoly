@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CompressDialog from '$lib/components/CompressDialog.svelte';
+	import LinkDialog from '$lib/components/LinkDialog.svelte';
 	import MoveDialog from '$lib/components/MoveDialog.svelte';
 	import ShareDialog from '$lib/components/ShareDialog.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
@@ -58,6 +59,9 @@
 	{/if}
 	{#if ui.share}
 		<ShareDialog node={ui.share} onclose={() => (ui.share = null)} />
+	{/if}
+	{#if ui.link}
+		<LinkDialog node={ui.link} onclose={() => (ui.link = null)} />
 	{/if}
 	{#if ui.move}
 		<MoveDialog nodes={ui.move} onclose={() => (ui.move = null)} />

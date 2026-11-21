@@ -3,6 +3,7 @@
 mod account;
 mod admin;
 mod content;
+mod links;
 mod nodes;
 mod shares;
 mod tools;
@@ -37,6 +38,13 @@ pub fn api() -> Router<AppState> {
         .route("/nodes/{id}/shares", get(shares::list).post(shares::create))
         .route("/shares/{id}", patch(shares::update).delete(shares::remove))
         .route("/shared", get(shares::shared_with_me))
+        .route("/shared-by-me", get(shares::shared_by_me))
+        .route("/nodes/{id}/sharing", delete(shares::stop_sharing))
+        .route("/nodes/{id}/links", get(links::list).post(links::create))
+        .route("/links/{id}", patch(links::update).delete(links::remove))
+        .route("/public/{token}", get(links::info))
+        .route("/public/{token}/unlock", post(links::unlock))
+        .route("/public/{token}/folder/{id}", get(links::folder))
         .route("/recent", get(nodes::recent))
         .route("/starred", get(nodes::starred))
         .route("/search", get(nodes::search))
@@ -52,7 +60,10 @@ pub fn api() -> Router<AppState> {
     let files = Router::new()
         .route("/nodes/{id}/content", get(content::content))
         .route("/nodes/{id}/thumbnail", get(content::thumbnail))
-        .route("/download/zip", get(content::zip));
+        .route("/download/zip", get(content::zip))
+        .route("/public/{token}/content/{id}", get(links::file_content))
+        .route("/public/{token}/thumbnail/{id}", get(links::file_thumbnail))
+        .route("/public/{token}/zip", get(links::zip));
 
     let uploads = Router::new()
         .route("/uploads", post(uploads::create).options(uploads::options))

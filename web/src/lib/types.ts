@@ -31,6 +31,7 @@ export interface FileNode {
 	thumbnail: boolean;
 	is_root: boolean;
 	parent_name: string | null;
+	space_kind: 'personal' | 'family';
 }
 
 export interface Crumb {
@@ -87,4 +88,48 @@ export interface ToolPreview {
 	original_size: number;
 	result_size: number;
 	token: string;
+}
+
+export interface ShareLink {
+	id: string;
+	node_id: string;
+	token: string;
+	allow_download: boolean;
+	has_password: boolean;
+	expires_at: string | null;
+	expired: boolean;
+	view_count: number;
+	download_count: number;
+	last_accessed_at: string | null;
+	created_at: string;
+}
+
+export interface SharedByMeItem {
+	node: FileNode;
+	shares: Share[];
+	links: ShareLink[];
+	last_shared_at: string;
+}
+
+export interface PublicNode {
+	id: string;
+	name: string;
+	kind: 'folder' | 'file';
+	size: number;
+	mime: string | null;
+	modified_at: string;
+	thumbnail: boolean;
+}
+
+export interface PublicInfo {
+	root: PublicNode;
+	allow_download: boolean;
+	shared_by: string;
+	expires_at: string | null;
+}
+
+export interface PublicFolder {
+	node: PublicNode;
+	crumbs: { id: string; name: string }[];
+	children: PublicNode[];
 }

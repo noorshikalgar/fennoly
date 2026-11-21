@@ -1,5 +1,6 @@
 # Rust
 /target/
+/target-test/
 **/*.rs.bk
 
 # Node / SvelteKit

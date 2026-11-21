@@ -13,7 +13,7 @@
 		{ href: '/', label: t('nav.home'), icon: House, active: path === '/' },
 		{ href: `/files/${me.home_id}`, label: t('nav.files'), icon: HardDrive, active: path.startsWith('/files') && space === 'personal' },
 		{ href: `/files/${me.family_id}`, label: t('nav.family'), icon: Users, active: path.startsWith('/files') && space === 'family' },
-		{ href: '/shared', label: t('nav.sharedShort'), icon: Share2, active: path === '/shared' || (path.startsWith('/files') && space === 'shared') }
+		{ href: '/shared', label: t('nav.sharedShort'), icon: Share2, active: path === '/shared' || path === '/shared-by-me' || (path.startsWith('/files') && space === 'shared') }
 	]);
 </script>
 

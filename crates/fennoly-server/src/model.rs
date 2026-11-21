@@ -39,12 +39,13 @@ pub struct NodeView {
     pub starred: bool,
     pub permission: Option<String>,
     pub parent_name: Option<String>,
+    pub space_kind: String,
 }
 
 /// Extra columns for `NodeView` queries. Bind the user id as `$1`.
 pub const VIEW_COLS: &str = "(EXISTS (SELECT 1 FROM stars st WHERE st.node_id = n.id AND st.user_id = $1)) AS starred, \
      node_access(n.id, $1) AS permission, \
-     (SELECT p.name FROM nodes p WHERE p.id = n.parent_id) AS parent_name";
+     (SELECT p.name FROM nodes p WHERE p.id = n.parent_id) AS parent_name,      (SELECT sp.kind FROM spaces sp WHERE sp.id = n.space_id) AS space_kind";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct NodeDto {
@@ -63,6 +64,8 @@ pub struct NodeDto {
     pub is_root: bool,
     /// Name of the containing folder, shown in search and recent lists.
     pub parent_name: Option<String>,
+    /// `personal` or `family`.
+    pub space_kind: String,
 }
 
 pub fn has_thumbnail(node: &NodeRow) -> bool {
@@ -92,6 +95,7 @@ impl From<NodeView> for NodeDto {
             permission: v.permission,
             thumbnail,
             parent_name: v.parent_name,
+            space_kind: v.space_kind,
         }
     }
 }

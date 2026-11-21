@@ -145,6 +145,36 @@ api "$ADMIN" PUT "/api/nodes/$NODE_P/star" > /dev/null
 [ "$(api "$ADMIN" GET /api/starred | jget "[0]['id']")" = "$NODE_P" ] || fail "starred list"
 ok "search by Hindi word, star and starred list"
 
+# Public links: password, view-only, then downloads allowed.
+ANON="$WORK/anon.jar"
+LINK=$(api "$ADMIN" POST "/api/nodes/$FOLDER/links" '{"allow_download":false,"password":"open1234"}')
+TOKEN_L=$(echo "$LINK" | jget "['token']"); LINK_ID=$(echo "$LINK" | jget "['id']")
+code=$(curl -s -o /dev/null -w '%{http_code}' -c "$ANON" -b "$ANON" "$BASE/api/public/$TOKEN_L")
+[ "$code" = "401" ] || fail "password link needs unlocking (got $code)"
+code=$(curl -s -o /dev/null -w '%{http_code}' -c "$ANON" -b "$ANON" -H 'content-type: application/json' -d '{"password":"nope"}' "$BASE/api/public/$TOKEN_L/unlock")
+[ "$code" = "400" ] || fail "wrong link password refused (got $code)"
+curl -sf -c "$ANON" -b "$ANON" -H 'content-type: application/json' -d '{"password":"open1234"}' "$BASE/api/public/$TOKEN_L/unlock" > /dev/null
+[ "$(curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L" | jget "['root']['name']")" = "Tax 2026" ] || fail "unlocked link shows the folder"
+[ "$(curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L/folder/$FOLDER" | jget "['children'].__len__()")" = "4" ] || fail "link lists folder contents"
+code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A")
+[ "$code" = "200" ] || fail "view-only link can preview (got $code)"
+code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A?download=1")
+[ "$code" = "403" ] || fail "view-only link cannot download (got $code)"
+code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$HOME_ID")
+[ "$code" = "404" ] || fail "link cannot reach outside the shared folder (got $code)"
+api "$ADMIN" PATCH "/api/links/$LINK_ID" '{"allow_download":true}' > /dev/null
+curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A?download=1" -o "$WORK/pub.out"
+cmp -s "$WORK/a.bin" "$WORK/pub.out" || fail "public download matches"
+code=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH -b "$ADMIN" -H 'content-type: application/json' -d '{"expires_at":"2001-01-01T00:00:00Z"}' "$BASE/api/links/$LINK_ID")
+[ "$code" = "400" ] || fail "expiry in the past refused (got $code)"
+SBM=$(api "$ADMIN" GET /api/shared-by-me)
+[ "$(echo "$SBM" | jget "[0]['shares'].__len__()"),$(echo "$SBM" | jget "[0]['links'][0]['download_count']")" = "1,1" ] || fail "shared-by-me lists the share and the link with its download"
+api "$ADMIN" DELETE "/api/nodes/$FOLDER/sharing" > /dev/null
+[ "$(api "$ADMIN" GET /api/shared-by-me | jget ".__len__()")" = "0" ] || fail "stop sharing removes everything"
+code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L")
+[ "$code" = "404" ] || fail "deleted link is gone (got $code)"
+ok "public link: password, view-only, stays inside its folder, download toggle, shared-by-me, stop sharing"
+
 # Rename + move + trash + restore.
 SUB=$(api "$ADMIN" POST "/api/nodes/$FOLDER/folders" '{"name":"Receipts"}' | jget "['id']")
 api "$ADMIN" PATCH "/api/nodes/$NODE_P" "{\"name\":\"receipt.bin\",\"parent_id\":\"$SUB\"}" > /dev/null
