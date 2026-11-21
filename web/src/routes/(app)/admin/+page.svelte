@@ -135,7 +135,7 @@
 		<button class="btn-primary" onclick={() => (adding = true)}><UserPlus size={18} />{t('admin.add')}</button>
 	</div>
 
-	<ul class="grid gap-3">
+	<ul class="grid grid-cols-1 gap-3">
 		{#each users as u (u.id)}
 			{@const pct = u.quota_bytes ? Math.min(1, u.used_bytes / u.quota_bytes) : 0}
 			<li class="card p-4 flex items-center gap-4 {u.disabled ? 'opacity-60' : ''}">

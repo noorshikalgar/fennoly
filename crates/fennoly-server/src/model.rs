@@ -40,12 +40,17 @@ pub struct NodeView {
     pub permission: Option<String>,
     pub parent_name: Option<String>,
     pub space_kind: String,
+    pub parent_is_root: Option<bool>,
 }
 
 /// Extra columns for `NodeView` queries. Bind the user id as `$1`.
-pub const VIEW_COLS: &str = "(EXISTS (SELECT 1 FROM stars st WHERE st.node_id = n.id AND st.user_id = $1)) AS starred, \
-     node_access(n.id, $1) AS permission, \
-     (SELECT p.name FROM nodes p WHERE p.id = n.parent_id) AS parent_name,      (SELECT sp.kind FROM spaces sp WHERE sp.id = n.space_id) AS space_kind";
+pub const VIEW_COLS: &str = concat!(
+    "(EXISTS (SELECT 1 FROM stars st WHERE st.node_id = n.id AND st.user_id = $1)) AS starred, ",
+    "node_access(n.id, $1) AS permission, ",
+    "(SELECT p.name FROM nodes p WHERE p.id = n.parent_id) AS parent_name, ",
+    "(SELECT sp.kind FROM spaces sp WHERE sp.id = n.space_id) AS space_kind, ",
+    "(SELECT p.parent_id IS NULL FROM nodes p WHERE p.id = n.parent_id) AS parent_is_root"
+);
 
 #[derive(Debug, Clone, Serialize)]
 pub struct NodeDto {
@@ -66,6 +71,8 @@ pub struct NodeDto {
     pub parent_name: Option<String>,
     /// `personal` or `family`.
     pub space_kind: String,
+    /// True when the containing folder is a space's top folder.
+    pub parent_is_root: bool,
 }
 
 pub fn has_thumbnail(node: &NodeRow) -> bool {
@@ -96,6 +103,7 @@ impl From<NodeView> for NodeDto {
             thumbnail,
             parent_name: v.parent_name,
             space_kind: v.space_kind,
+            parent_is_root: v.parent_is_root.unwrap_or(false),
         }
     }
 }

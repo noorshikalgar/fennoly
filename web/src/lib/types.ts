@@ -32,6 +32,7 @@ export interface FileNode {
 	is_root: boolean;
 	parent_name: string | null;
 	space_kind: 'personal' | 'family';
+	parent_is_root: boolean;
 }
 
 export interface Crumb {

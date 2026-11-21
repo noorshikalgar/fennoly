@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { t } from '$lib/i18n/index.svelte';
 	import { session } from '$lib/stores.svelte';
+	import { ui } from '$lib/ui.svelte';
 	import NewMenu from './NewMenu.svelte';
 
 	let { space }: { space: string | null } = $props();
@@ -17,9 +18,12 @@
 	]);
 </script>
 
-<div class="lg:hidden fixed right-4 z-30 bottom-[calc(4.75rem+env(safe-area-inset-bottom))]">
-	<NewMenu variant="fab" />
-</div>
+<!-- Upload button only where uploading makes sense: home and folders you can write to. -->
+{#if path === '/' || (path.startsWith('/files') && ui.folder?.writable)}
+	<div class="lg:hidden fixed right-4 z-30 bottom-[calc(4.75rem+env(safe-area-inset-bottom))]">
+		<NewMenu variant="fab" />
+	</div>
+{/if}
 
 <nav
 	class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-t border-border
