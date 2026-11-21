@@ -22,7 +22,8 @@
 		clearTimeout(timer);
 		const run = () => {
 			const q = query.trim();
-			if (q) goto(`/search?q=${encodeURIComponent(q)}`, { replace: page.url.pathname === '/search' });
+			// reset: false keeps the cursor in the search box while results update.
+			if (q) goto(`/search?q=${encodeURIComponent(q)}`, { replace: page.url.pathname === '/search', reset: false });
 		};
 		if (immediate) run();
 		else timer = setTimeout(run, 300);

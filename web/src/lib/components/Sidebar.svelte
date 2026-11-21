@@ -5,6 +5,7 @@
 	import { t } from '$lib/i18n/index.svelte';
 	import { session } from '$lib/stores.svelte';
 	import { ui } from '$lib/ui.svelte';
+	import Logo from './Logo.svelte';
 	import NewMenu from './NewMenu.svelte';
 
 	let { space }: { space: string | null } = $props();
@@ -26,9 +27,8 @@
 </script>
 
 <nav class="flex flex-col h-full w-64 px-3 py-4 gap-1" aria-label="Main">
-	<a href="/" class="flex items-center gap-2.5 px-3 mb-4" onclick={() => (ui.sidebarOpen = false)}>
-		<img src="/icons/icon.svg" alt="" class="size-8" />
-		<span class="text-xl font-bold tracking-tight">Fennoly</span>
+	<a href="/" class="flex items-center px-3 mb-4" aria-label="Fennoly" onclick={() => (ui.sidebarOpen = false)}>
+		<Logo size={32} wordmark />
 	</a>
 	<div class="px-1 mb-4"><NewMenu /></div>
 
