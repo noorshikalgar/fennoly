@@ -245,7 +245,7 @@
 	function meta(n: FileNode) {
 		const parts = [];
 		if (n.kind === 'file') parts.push(formatBytes(n.size));
-		parts.push(relativeTime(n.modified_at));
+		parts.push(relativeTime(n.modified_at, 'short'));
 		return parts.join(' · ');
 	}
 </script>
@@ -350,7 +350,7 @@
 	</div>
 
 	{#if loading && !items.length}
-		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-2" aria-busy="true">
+		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 mt-2" aria-busy="true">
 			{#each Array(8) as _, i (i)}
 				<div class="rounded-2xl bg-surface-2 animate-pulse aspect-[4/3.6]"></div>
 			{/each}
@@ -359,7 +359,8 @@
 		{@render empty?.()}
 	{:else if ui.view === 'grid'}
 		{#if folders.length}
-			<div class="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-2">
+			<!-- Folders are wide rows (names stay readable); files are cards. -->
+			<div class="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 mt-2">
 				{#each folders as node (node.id)}
 					{@const isSel = selected.has(node.id)}
 					<div
@@ -397,7 +398,7 @@
 			</div>
 		{/if}
 		{#if files.length}
-			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 {folders.length ? 'mt-6' : 'mt-2'}">
+			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 {folders.length ? 'mt-6' : 'mt-2'}">
 				{#each files as node (node.id)}
 					{@const isSel = selected.has(node.id)}
 					<div

@@ -143,7 +143,7 @@ export const en = {
 	'share.canEdit': 'Can edit',
 	'share.notOwner': 'Only the owner can change who has access to this item.',
 	'share.familyNote': 'Everyone can already see items in the Family space, so there is nothing to share.',
-	'share.noUsers': 'No one else is on this server yet. An admin can add family members from Settings.',
+	'share.noUsers': 'No one else is on this server yet. An admin can add them under Family members.',
 	'share.updated': 'Sharing updated',
 	'share.leave': 'Remove from my list',
 	'share.sharedBy': 'Shared by {name}',

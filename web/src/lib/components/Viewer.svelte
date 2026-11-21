@@ -52,7 +52,7 @@
 		<FileIcon {node} size={20} />
 		<div class="flex-1 min-w-0">
 			<div class="truncate font-medium">{node.name}</div>
-			<div class="truncate text-xs text-white/60">{formatBytes(node.size)} · {formatDateTime(node.modified_at)}</div>
+			<div class="truncate text-xs text-white/60">{formatBytes(node.size)}<span class="hidden sm:inline"> · {formatDateTime(node.modified_at)}</span></div>
 		</div>
 		{#if canCompress(node)}
 			<button class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center" title={t('tools.compress')} aria-label={t('tools.compress')} onclick={() => (ui.compress = node)}>

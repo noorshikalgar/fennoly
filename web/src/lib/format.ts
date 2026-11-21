@@ -25,10 +25,11 @@ export function formatDateTime(iso: string): string {
 	);
 }
 
-/** "2 hours ago", "yesterday", or a date for anything older than a week. */
-export function relativeTime(iso: string): string {
+/** "2 hours ago", "yesterday", or a date for anything older than a week.
+ * `short` gives compact forms ("2 hr. ago") for tight spaces such as cards. */
+export function relativeTime(iso: string, style: 'long' | 'short' = 'long'): string {
 	const diff = (Date.parse(iso) - Date.now()) / 1000;
-	const rtf = new Intl.RelativeTimeFormat(INTL_LOCALE[i18n.locale], { numeric: 'auto' });
+	const rtf = new Intl.RelativeTimeFormat(INTL_LOCALE[i18n.locale], { numeric: 'auto', style });
 	const abs = Math.abs(diff);
 	// Small clock differences between server and device should read as "now".
 	if (abs < 45) return rtf.format(0, 'second');

@@ -136,7 +136,8 @@
 		{/if}
 	{/if}
 	{#snippet footer()}
-		<button class="btn-ghost" onclick={onclose}>{t('common.cancel')}</button>
+		<!-- On phones the X closes the sheet; keep the two real choices side by side. -->
+		<button class="btn-ghost hidden sm:inline-flex" onclick={onclose}>{t('common.cancel')}</button>
 		{#if available}
 			<button class="btn-outline" disabled={!preview || working || saving} onclick={() => apply('replace')}>{t('tools.replace')}</button>
 			<button class="btn-primary" disabled={!preview || working || saving} onclick={() => apply('copy')}>{t('tools.saveCopy')}</button>
