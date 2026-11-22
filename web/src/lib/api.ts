@@ -1,5 +1,12 @@
 import type {
 	AdminUser,
+	BackupEntry,
+	BackupOverview,
+	BackupRun,
+	BackupSnapshot,
+	BackupStatus,
+	BackupTarget,
+	BackupTargetInput,
 	FileNode,
 	Me,
 	NodeResponse,
@@ -116,7 +123,24 @@ export const api = {
 	adminCreate: (b: { username: string; display_name: string; password: string; role: string; locale?: string }) =>
 		post<AdminUser>('/admin/users', b),
 	adminUpdate: (id: string, b: Record<string, unknown>) => patch<AdminUser>(`/admin/users/${id}`, b),
-	adminDelete: (id: string) => del(`/admin/users/${id}`)
+	adminDelete: (id: string) => del(`/admin/users/${id}`),
+
+	backups: () => get<BackupOverview>('/admin/backups'),
+	backupStatus: () => get<BackupStatus>('/admin/backups/status'),
+	backupCreate: (b: BackupTargetInput) =>
+		post<{ target: BackupTarget; recovery_key: string | null }>('/admin/backups', b),
+	backupUpdate: (id: string, b: Partial<BackupTargetInput>) => patch<BackupTarget>(`/admin/backups/${id}`, b),
+	backupDelete: (id: string) => del(`/admin/backups/${id}`),
+	backupTest: (id: string) => post<{ ok: boolean }>(`/admin/backups/${id}/test`),
+	backupRun: (id: string) => post<{ run_id: string }>(`/admin/backups/${id}/run`),
+	backupRuns: (id: string, limit = 30) => get<BackupRun[]>(`/admin/backups/${id}/runs?limit=${limit}`),
+	backupKey: (id: string, password: string) =>
+		post<{ recovery_key: string | null }>(`/admin/backups/${id}/recovery-key`, { password }),
+	backupSnapshots: (id: string) => get<BackupSnapshot[]>(`/admin/backups/${id}/snapshots`),
+	backupBrowse: (id: string, snap: string, path: string) =>
+		get<BackupEntry[]>(`/admin/backups/${id}/snapshots/${snap}/ls?path=${encodeURIComponent(path)}`),
+	backupRestore: (id: string, snap: string, paths: string[]) =>
+		post<{ run_id: string }>(`/admin/backups/${id}/snapshots/${snap}/restore`, { paths })
 };
 
 export const contentUrl = (id: string, download = false) =>

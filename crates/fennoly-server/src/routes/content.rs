@@ -22,9 +22,15 @@ use crate::error::{AppError, AppResult};
 use crate::model::has_thumbnail;
 use crate::state::AppState;
 
-/// Types that could run script in the browser are always downloaded,
-/// never shown inline.
-const DOWNLOAD_ONLY: &[&str] = &["text/html", "image/svg+xml", "application/xhtml+xml", "text/xml", "application/xml"];
+/// Only these are ever shown inline; everything else is downloaded. An
+/// allow-list, because any HTML- or XML-like type (`*+xml`, XSLT, …) can
+/// carry script.
+fn safe_inline(mime: &str) -> bool {
+    (mime.starts_with("image/") && mime != "image/svg+xml")
+        || mime.starts_with("video/")
+        || mime.starts_with("audio/")
+        || matches!(mime, "application/pdf" | "text/plain")
+}
 
 fn encode_rfc5987(s: &str) -> String {
     let mut out = String::new();
@@ -70,7 +76,7 @@ pub async fn serve(r: &Resolved, req: Request, download: bool) -> AppResult<Resp
         return Err(AppError::bad("folders are downloaded as zip"));
     }
     let mime = r.node.mime.clone().unwrap_or_else(|| "application/octet-stream".into());
-    let risky = DOWNLOAD_ONLY.contains(&mime.as_str());
+    let risky = !safe_inline(&mime);
     let download = download || risky;
 
     let res = ServeFile::new(&r.path)
@@ -104,6 +110,10 @@ pub async fn thumbnail(State(state): State<AppState>, user: CurrentUser, Path(id
     thumbnail_of(&state, &r).await
 }
 
+/// Image decoding and PDF compression use a lot of memory and CPU; a folder
+/// of 200 photos must not start 200 of them at once.
+pub static HEAVY_WORK: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(3);
+
 /// A cached JPEG thumbnail for an image node.
 pub async fn thumbnail_of(state: &AppState, r: &Resolved) -> AppResult<Response> {
     let id = r.node.id;
@@ -114,6 +124,7 @@ pub async fn thumbnail_of(state: &AppState, r: &Resolved) -> AppResult<Response>
     let bytes = match tokio::fs::read(&cached).await {
         Ok(b) => b,
         Err(_) => {
+            let _slot = HEAVY_WORK.acquire().await.map_err(|e| AppError::Internal(e.into()))?;
             let source = tokio::fs::read(&r.path).await?;
             let thumb = tokio::task::spawn_blocking(move || fennoly_tools::image_tools::thumbnail(&source, 360))
                 .await??;

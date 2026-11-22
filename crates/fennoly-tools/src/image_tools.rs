@@ -29,12 +29,28 @@ pub struct CompressOptions {
     pub max_dimension: Option<u32>,
 }
 
+const MAX_SIDE: u32 = 16_384;
+const MAX_DECODE_BYTES: u64 = 400 * 1024 * 1024;
+
 /// Decodes an image and applies its EXIF orientation, so phone photos
 /// come out the right way up.
 pub fn decode(bytes: &[u8]) -> Result<DynamicImage, ToolError> {
-    let mut decoder = ImageReader::new(Cursor::new(bytes))
-        .with_guessed_format()?
-        .into_decoder()?;
+    let mut reader = ImageReader::new(Cursor::new(bytes)).with_guessed_format()?;
+    // A small file can claim enormous dimensions (a "decompression bomb").
+    // These limits still fit 100-megapixel photos.
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(MAX_SIDE);
+    limits.max_image_height = Some(MAX_SIDE);
+    limits.max_alloc = Some(MAX_DECODE_BYTES);
+    reader.limits(limits);
+    let mut decoder = reader.into_decoder()?;
+    // Checked here too: not every format's decoder enforces `max_alloc`
+    // before it allocates the pixel buffer.
+    if decoder.total_bytes() > MAX_DECODE_BYTES {
+        return Err(ToolError::Image(image::ImageError::Limits(image::error::LimitError::from_kind(
+            image::error::LimitErrorKind::InsufficientMemory,
+        ))));
+    }
     let orientation = decoder.orientation()?;
     let mut img = DynamicImage::from_decoder(decoder)?;
     img.apply_orientation(orientation);
@@ -98,6 +114,39 @@ mod tests {
             .write_to(&mut Cursor::new(&mut out), ImageFormat::Png)
             .unwrap();
         out
+    }
+
+    /// A PNG whose header claims `w` x `h` pixels (the pixel data is not
+    /// there: decoding must stop at the header).
+    fn bomb_png(w: u32, h: u32) -> Vec<u8> {
+        fn crc32(data: &[u8]) -> u32 {
+            let mut crc = 0xFFFF_FFFFu32;
+            for &b in data {
+                crc ^= u32::from(b);
+                for _ in 0..8 {
+                    crc = if crc & 1 != 0 { (crc >> 1) ^ 0xEDB8_8320 } else { crc >> 1 };
+                }
+            }
+            !crc
+        }
+        let mut png = sample_png(1, 1);
+        // IHDR data starts after the 8-byte signature, 4-byte length and "IHDR".
+        png[16..20].copy_from_slice(&w.to_be_bytes());
+        png[20..24].copy_from_slice(&h.to_be_bytes());
+        let crc = crc32(&png[12..29]);
+        png[29..33].copy_from_slice(&crc.to_be_bytes());
+        png
+    }
+
+    #[test]
+    fn decompression_bombs_are_refused() {
+        // Refused because of the limits, before any pixel data is read.
+        for (w, h) in [(100_000, 100_000), (20_000, 2), (16_000, 16_000)] {
+            let err = decode(&bomb_png(w, h)).err().map(|e| e.to_string().to_lowercase()).unwrap_or_default();
+            assert!(err.contains("limit"), "{w}x{h}: {err}");
+        }
+        assert!(thumbnail(&bomb_png(20_000, 2), 320).is_err());
+        assert!(decode(&sample_png(64, 48)).is_ok());
     }
 
     #[test]

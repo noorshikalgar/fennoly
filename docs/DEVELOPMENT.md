@@ -48,7 +48,20 @@ docker compose -f deploy/docker-compose.dev.yml exec postgres createdb -U fennol
 FENNOLY_DATABASE_URL=postgres://fennoly:fennoly@localhost:54329/fennoly_test FENNOLY_DATA_DIR=./data-test FENNOLY_BIND=127.0.0.1:8687 CARGO_TARGET_DIR=target-test cargo run -p fennoly-server
 scripts/reset-test.sh                       # wipe the sandbox
 scripts/smoke.sh http://127.0.0.1:8687      # full API + chunked upload tests
+scripts/backup-api-test.sh                  # backup API checks (after smoke.sh; ENGINE=1 if restic is installed)
 ```
+
+### Backups in development
+
+PostgreSQL runs in Docker during development, so point the database dump at it:
+
+```bash
+FENNOLY_PG_DUMP="docker exec -i fennoly-dev-postgres-1 pg_dump"
+FENNOLY_PG_DUMP_URL=postgres://fennoly:fennoly@localhost:5432/fennoly_test   # address as seen inside the container
+```
+
+restic and rclone are found on `PATH`, or set `FENNOLY_RESTIC` / `FENNOLY_RCLONE`.
+See [BACKUPS.md](BACKUPS.md).
 
 ### Testing bad networks
 

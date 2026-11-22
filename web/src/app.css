@@ -115,6 +115,34 @@ html:lang(mr) body {
 	background: var(--primary-soft);
 }
 
+/* Tailwind 4 gives buttons the arrow cursor; everything clickable gets the
+   hand instead. In the base layer, so a utility such as `cursor-default`
+   (the dimmed backdrop behind dialogs) still wins. */
+@layer base {
+	button,
+	[role='button'],
+	[role='switch'],
+	[role='tab'],
+	[role='radio'],
+	[role='menuitem'],
+	[role='option'],
+	[type='checkbox'],
+	[type='radio'],
+	[type='file'],
+	[type='color'],
+	select,
+	summary,
+	label:has(> input[type='checkbox']),
+	label:has(> input[type='radio']),
+	label[for] {
+		cursor: pointer;
+	}
+	:disabled,
+	[aria-disabled='true'] {
+		cursor: not-allowed;
+	}
+}
+
 /* Reusable building blocks. Declared as utilities so they can be combined
    with other classes and overridden (e.g. `btn-primary h-12`). */
 @utility btn {

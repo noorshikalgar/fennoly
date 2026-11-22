@@ -8,6 +8,8 @@
 //! <data>/tmp/chunked/<upload id>    chunked uploads in progress
 //! <data>/cache/thumbs/              generated thumbnails
 //! <data>/cache/tools/               compress previews waiting to be kept
+//! <data>/backup-staging/            database dump + manifest for the next backup
+//! <data>/secrets.key                key that encrypts stored passwords (keep it!)
 //! ```
 //!
 //! Files stay readable without Fennoly, so a family never loses access to
@@ -26,7 +28,7 @@ pub struct Storage {
 impl Storage {
     pub fn new(root: impl Into<PathBuf>) -> std::io::Result<Self> {
         let root = root.into();
-        for dir in ["spaces", "trash", "tmp/uploads", "tmp/chunked", "cache/thumbs", "cache/tools"] {
+        for dir in ["spaces", "trash", "tmp/uploads", "tmp/chunked", "tmp/restore", "cache/thumbs", "cache/tools", "cache/restic"] {
             std::fs::create_dir_all(root.join(dir))?;
         }
         let root = std::fs::canonicalize(&root)?;
@@ -52,6 +54,32 @@ impl Storage {
     /// A chunked upload's pre-sized file, filled chunk by chunk.
     pub fn chunked_file(&self, upload_id: Uuid) -> PathBuf {
         self.root.join("tmp").join("chunked").join(upload_id.to_string())
+    }
+
+    /// Root of all spaces (what backups capture).
+    pub fn spaces_root(&self) -> PathBuf {
+        self.root.join("spaces")
+    }
+
+    pub fn trash_root(&self) -> PathBuf {
+        self.root.join("trash")
+    }
+
+    /// Database dump and manifest, written just before each backup.
+    pub fn backup_staging(&self) -> PathBuf {
+        self.root.join("backup-staging")
+    }
+
+    pub fn restore_dir(&self, run_id: Uuid) -> PathBuf {
+        self.root.join("tmp").join("restore").join(run_id.to_string())
+    }
+
+    pub fn restic_cache(&self) -> PathBuf {
+        self.root.join("cache").join("restic")
+    }
+
+    pub fn secrets_key(&self) -> PathBuf {
+        self.root.join("secrets.key")
     }
 
     pub fn tmp_dir(&self) -> PathBuf {

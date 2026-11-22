@@ -2,6 +2,7 @@
 
 use axum::Json;
 use axum::extract::{Path, Query, State};
+use fennoly_core::Permission;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -93,13 +94,20 @@ pub async fn create_folder(
     Path(parent_id): Path<Uuid>,
     Json(req): Json<CreateFolder>,
 ) -> AppResult<Json<NodeDto>> {
-    let parent = access::resolve(&state, user.id, parent_id).await?;
+    let id = create_folder_node(&state, &user, parent_id, &req.name).await?;
+    Ok(Json(view(&state, user.id, id).await?))
+}
+
+/// Creates a folder named `name` in `parent_id` (which `user` must be able to
+/// write to) and returns its id. Fails with Conflict if the name is taken.
+pub(crate) async fn create_folder_node(state: &AppState, user: &CurrentUser, parent_id: Uuid, name: &str) -> AppResult<Uuid> {
+    let parent = access::resolve(state, user.id, parent_id).await?;
     parent.require_write()?;
     if !parent.node.is_folder() {
         return Err(AppError::bad("not a folder"));
     }
-    let name = fennoly_core::validate_name(&req.name)?;
-    if access::sibling_names(&state, parent_id).await?.contains(&name.to_lowercase()) {
+    let name = fennoly_core::validate_name(name)?;
+    if access::sibling_names(state, parent_id).await?.contains(&name.to_lowercase()) {
         return Err(AppError::Conflict("an item with this name already exists".into()));
     }
     let mut tx = state.db.begin().await?;
@@ -115,7 +123,7 @@ pub async fn create_folder(
     .await?;
     tokio::fs::create_dir_all(parent.path.join(&name)).await?;
     tx.commit().await?;
-    Ok(Json(view(&state, user.id, id).await?))
+    Ok(id)
 }
 
 #[derive(Deserialize)]
@@ -146,6 +154,25 @@ pub async fn update_node(
     }
     if target.chain.iter().any(|c| c.id == id) {
         return Err(AppError::bad("a folder cannot be moved into itself"));
+    }
+    if target.node.space_id != r.node.space_id {
+        // Taking an item out of someone's space needs more than edit rights:
+        // a share editor could otherwise move the owner's files into their own.
+        if r.perm != Permission::Owner && r.space_kind() != "family" {
+            return Err(AppError::Forbidden);
+        }
+        let bytes: i64 = sqlx::query_scalar(
+            "WITH RECURSIVE sub AS (
+                 SELECT id, kind, size FROM nodes WHERE id = $1
+                 UNION ALL
+                 SELECT n.id, n.kind, n.size FROM nodes n JOIN sub s ON n.parent_id = s.id WHERE n.trashed_at IS NULL
+             )
+             SELECT COALESCE(SUM(size) FILTER (WHERE kind = 'file'), 0)::BIGINT FROM sub",
+        )
+        .bind(id)
+        .fetch_one(&state.db)
+        .await?;
+        super::uploads::check_quota(&state, &target, bytes.max(0) as u64).await?;
     }
 
     let same_place = target_id == current_parent;

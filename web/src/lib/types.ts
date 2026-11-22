@@ -134,3 +134,107 @@ export interface PublicFolder {
 	crumbs: { id: string; name: string }[];
 	children: PublicNode[];
 }
+
+export type BackupKind = 'local' | 'smb' | 'sftp' | 's3';
+
+export interface BackupSettings {
+	path?: string;
+	host?: string;
+	port?: number;
+	share?: string;
+	user?: string;
+	domain?: string;
+	endpoint?: string;
+	bucket?: string;
+	region?: string;
+}
+
+export interface BackupSecrets {
+	password?: string;
+	access_key?: string;
+	secret_key?: string;
+}
+
+export interface BackupRun {
+	id: string;
+	target_id: string;
+	kind: 'backup' | 'check' | 'restore';
+	status: 'running' | 'success' | 'failed';
+	trigger: 'manual' | 'schedule';
+	started_at: string;
+	finished_at: string | null;
+	snapshot_id: string | null;
+	files_new: number | null;
+	files_changed: number | null;
+	bytes_added: number | null;
+	total_files: number | null;
+	total_bytes: number | null;
+	error: string | null;
+}
+
+export interface BackupTarget {
+	id: string;
+	name: string;
+	kind: BackupKind;
+	settings: BackupSettings;
+	has_password: boolean;
+	has_keys: boolean;
+	encrypted: boolean;
+	schedule: string;
+	keep_daily: number;
+	keep_weekly: number;
+	keep_monthly: number;
+	include_trash: boolean;
+	enabled: boolean;
+	initialized: boolean;
+	next_run_at: string | null;
+	location: string;
+	/** Progress (0–1) of the run in progress, or null. */
+	running: number | null;
+	last_run: BackupRun | null;
+	last_success_at: string | null;
+}
+
+export interface BackupOverview {
+	engine: { restic: boolean; rclone: boolean };
+	targets: BackupTarget[];
+}
+
+export interface BackupSnapshot {
+	id: string;
+	short_id: string;
+	time: string;
+	paths: string[];
+}
+
+export interface BackupEntry {
+	name: string;
+	label: string | null;
+	rel: string;
+	is_dir: boolean;
+	size: number | null;
+	mtime: string | null;
+}
+
+export interface BackupStatus {
+	targets: number;
+	enabled: number;
+	last_success_at: string | null;
+	last_failed: boolean;
+	stale: boolean;
+}
+
+export interface BackupTargetInput {
+	name: string;
+	kind?: BackupKind;
+	settings: BackupSettings;
+	secrets: BackupSecrets;
+	encrypted?: boolean;
+	recovery_key?: string;
+	schedule: string;
+	keep_daily: number;
+	keep_weekly: number;
+	keep_monthly: number;
+	include_trash: boolean;
+	enabled?: boolean;
+}

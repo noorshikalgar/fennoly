@@ -119,7 +119,7 @@ pub(super) async fn check_quota(state: &AppState, folder: &Resolved, add: u64) -
     Ok(())
 }
 
-pub(super) async fn blake3_file(path: &FsPath) -> AppResult<String> {
+pub(crate) async fn blake3_file(path: &FsPath) -> AppResult<String> {
     let path = path.to_path_buf();
     let hash = tokio::task::spawn_blocking(move || -> std::io::Result<String> {
         let mut hasher = blake3::Hasher::new();
@@ -147,7 +147,7 @@ async fn finalize(state: &AppState, user: &CurrentUser, upload: &UploadRow) -> A
 
 /// Moves a fully received file from `tmp` into `parent_id` under a free name
 /// based on `filename`, and records it. Shared by every upload protocol.
-pub(super) async fn place_file(
+pub(crate) async fn place_file(
     state: &AppState,
     user: &CurrentUser,
     parent_id: Uuid,
@@ -157,7 +157,12 @@ pub(super) async fn place_file(
     hash: &str,
 ) -> AppResult<Uuid> {
     let parent = target_folder(state, user, &parent_id.to_string()).await?;
-    let wanted = fennoly_core::validate_name(filename).unwrap_or_else(|_| "upload".to_string());
+    // Checked again here, not only when the upload started: several uploads
+    // started together would otherwise all fit and together overflow it.
+    check_quota(state, &parent, length.max(0) as u64).await?;
+    // A name like "../../x.pdf" keeps only its last part; never a path.
+    let last = filename.rsplit(['/', '\\']).next().unwrap_or(filename);
+    let wanted = fennoly_core::validate_name(last).unwrap_or_else(|_| "upload".to_string());
     let mime = mime_guess::from_path(&wanted).first_or_octet_stream().essence_str().to_string();
 
     let mut attempt = 0;

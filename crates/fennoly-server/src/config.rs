@@ -17,6 +17,12 @@ pub struct Config {
     pub secure_cookies: bool,
     pub max_upload_bytes: u64,
     pub trash_days: i64,
+    /// Command for database dumps (`FENNOLY_PG_DUMP`, default `pg_dump`).
+    /// May include leading arguments, e.g. `docker exec -i db pg_dump`.
+    pub pg_dump: Option<String>,
+    /// Connection string pg_dump uses (`FENNOLY_PG_DUMP_URL`), when it
+    /// differs from the server's own (for example inside a container).
+    pub pg_dump_url: Option<String>,
 }
 
 fn var(name: &str) -> Option<String> {
@@ -58,6 +64,8 @@ impl Config {
             secure_cookies,
             max_upload_bytes: max_upload_gb * 1024 * 1024 * 1024,
             trash_days,
+            pg_dump: var("FENNOLY_PG_DUMP"),
+            pg_dump_url: var("FENNOLY_PG_DUMP_URL"),
         })
     }
 }

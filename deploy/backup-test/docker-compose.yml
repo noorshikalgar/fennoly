@@ -1,0 +1,68 @@
+# Backup drill: Fennoly (the real Docker image) plus one of every kind of
+# backup destination, all on a private network. Used by scripts/backup-drill.sh.
+#   docker build -f deploy/Dockerfile -t fennoly:backup-test .
+#   docker compose -f deploy/backup-test/docker-compose.yml up -d
+#   bash scripts/backup-drill.sh
+#   docker compose -f deploy/backup-test/docker-compose.yml down -v
+# Every password here is a throwaway test value.
+name: fennoly-bktest
+
+services:
+  fennoly:
+    image: fennoly:backup-test
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      FENNOLY_DATABASE_URL: postgres://fennoly:drill@postgres:5432/fennoly
+      TZ: Asia/Kolkata
+      RUST_LOG: fennoly=debug,tower_http=warn
+    ports:
+      - "127.0.0.1:8695:8686"
+    volumes:
+      - data:/data
+      - usb:/backups
+    # A tiny "drive" to check what happens when a destination fills up.
+    tmpfs:
+      - /tiny:size=8m,uid=1000,gid=1000,mode=0755
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: fennoly
+      POSTGRES_PASSWORD: drill
+      POSTGRES_DB: fennoly
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fennoly"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # S3-compatible storage (SeaweedFS), endpoint http://s3:8333.
+  s3:
+    image: chrislusf/seaweedfs:latest
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/s3.json
+    configs:
+      - source: s3-identities
+        target: /etc/s3.json
+
+  # SFTP server: user "noor", writable folder /home/noor/backups.
+  sftp:
+    image: atmoz/sftp:alpine
+    command: noor:sftp-pass:1001:1001:backups
+
+  # Windows/NAS-style SMB share "backups" for user "noor".
+  samba:
+    image: dperson/samba:latest
+    command: '-u "noor;smb-pass" -s "backups;/share;yes;no;no;noor" -p'
+
+configs:
+  s3-identities:
+    content: |
+      {"identities": [{"name": "drill",
+        "credentials": [{"accessKey": "drillaccess", "secretKey": "drillsecret123"}],
+        "actions": ["Admin", "Read", "Write", "List", "Tagging"]}]}
+
+volumes:
+  data:
+  usb:

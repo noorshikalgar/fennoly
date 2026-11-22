@@ -59,7 +59,10 @@ pub fn normalize_username(raw: &str) -> AppResult<String> {
         .chars()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '.' | '_' | '-'));
     let ok_start = name.chars().next().is_some_and(|c| c.is_ascii_alphanumeric());
-    if ok_len && ok_chars && ok_start {
+    // The name becomes a folder: Windows drops a trailing dot ("noor." would
+    // share "noor"'s folder) and reserves device names such as "con".
+    let ok_folder = !name.ends_with('.') && fennoly_core::validate_name(&name).is_ok();
+    if ok_len && ok_chars && ok_start && ok_folder {
         Ok(name)
     } else {
         Err(AppError::bad(
@@ -170,6 +173,19 @@ impl FromRequestParts<AppState> for CurrentUser {
     }
 }
 
+/// Loads an active user outside a request (background jobs acting for them).
+pub async fn user_by_id(state: &AppState, id: Uuid) -> AppResult<CurrentUser> {
+    sqlx::query_as(
+        "SELECT id, username, display_name, role, locale, theme, avatar_color, quota_bytes,
+                '00000000-0000-0000-0000-000000000000'::uuid AS session_id
+         FROM users WHERE id = $1 AND disabled_at IS NULL",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or(AppError::NotFound)
+}
+
 /// A signed-in admin.
 pub struct AdminUser(pub CurrentUser);
 
@@ -194,6 +210,11 @@ mod tests {
         assert!(normalize_username("-noor").is_err());
         assert!(normalize_username("noor/../x").is_err());
         assert!(normalize_username("नूर").is_err());
+        assert!(normalize_username("noor.").is_err());
+        assert!(normalize_username("con").is_err());
+        assert!(normalize_username("com1").is_err());
+        assert!(normalize_username("nul.x").is_err());
+        assert!(normalize_username("console").is_ok());
     }
 
     #[tokio::test]

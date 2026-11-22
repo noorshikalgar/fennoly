@@ -243,7 +243,12 @@ fn grant_for(link: &LinkRow) -> Option<String> {
 }
 
 async fn find_link(state: &AppState, token: &str) -> AppResult<LinkRow> {
-    let link: LinkRow = sqlx::query_as(&format!("SELECT {LINK_COLS} FROM links WHERE token = $1"))
+    // A link lives only as long as its creator's account is active: links of
+    // a disabled or removed member stop working with the account.
+    let link: LinkRow = sqlx::query_as(&format!(
+        "SELECT {LINK_COLS} FROM links WHERE token = $1
+           AND EXISTS (SELECT 1 FROM users u WHERE u.id = links.created_by AND u.disabled_at IS NULL)"
+    ))
         .bind(token)
         .fetch_optional(&state.db)
         .await?

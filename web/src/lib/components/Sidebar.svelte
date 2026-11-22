@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, HardDrive, House, Link2, Settings, Share2, ShieldCheck, Star, Trash, Users } from '@lucide/svelte';
+	import { Clock, DatabaseBackup, HardDrive, House, Link2, Settings, Share2, ShieldCheck, Star, Trash, Users } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { formatBytes } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
@@ -55,6 +55,13 @@
 			class="flex items-center gap-3 px-3 h-10 rounded-xl text-[0.93rem] {path === '/admin' ? 'bg-primary-soft text-primary font-semibold' : 'hover:bg-surface-2'}"
 		>
 			<ShieldCheck size={19} />{t('nav.admin')}
+		</a>
+		<a
+			href="/admin/backups"
+			onclick={() => (ui.sidebarOpen = false)}
+			class="flex items-center gap-3 px-3 h-10 rounded-xl text-[0.93rem] {path.startsWith('/admin/backups') ? 'bg-primary-soft text-primary font-semibold' : 'hover:bg-surface-2'}"
+		>
+			<DatabaseBackup size={19} />{t('nav.backups')}
 		</a>
 	{/if}
 	<a

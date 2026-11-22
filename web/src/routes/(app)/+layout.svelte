@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import BackupBanner from '$lib/components/BackupBanner.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CompressDialog from '$lib/components/CompressDialog.svelte';
 	import LinkDialog from '$lib/components/LinkDialog.svelte';
@@ -46,6 +47,7 @@
 		<div class="flex-1 min-w-0 flex flex-col">
 			<TopBar />
 			<main class="flex-1 px-4 lg:px-8 pb-24 lg:pb-10 w-full max-w-[1600px]">
+				<BackupBanner />
 				{@render children()}
 			</main>
 		</div>
