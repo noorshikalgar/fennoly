@@ -13,7 +13,28 @@ export default defineConfig({
 			{
 				// Single-page app: the Rust server returns index.html for unknown paths.
 				adapter: adapter({ fallback: 'index.html' }),
-				alias: { $lib: 'src/lib' }
+				alias: { $lib: 'src/lib' },
+				// Content-Security-Policy as a <meta> tag, with hashes for SvelteKit's
+				// own inline start-up script. Blocks injected scripts, plugins and
+				// sending data to other sites. (frame-ancestors comes from the server.)
+				csp: {
+					mode: 'hash',
+					directives: {
+						'default-src': ['self'],
+						'script-src': ['self', 'wasm-unsafe-eval'],
+						'worker-src': ['self', 'blob:'],
+						'style-src': ['self', 'unsafe-inline'],
+						'img-src': ['self', 'data:', 'blob:'],
+						'media-src': ['self', 'blob:'],
+						'font-src': ['self', 'data:'],
+						'connect-src': ['self'],
+						'frame-src': ['self'],
+						'manifest-src': ['self'],
+						'object-src': ['none'],
+						'base-uri': ['self'],
+						'form-action': ['self']
+					}
+				}
 			},
 			{
 				registerType: 'autoUpdate',

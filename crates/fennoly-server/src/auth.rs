@@ -59,7 +59,10 @@ pub fn normalize_username(raw: &str) -> AppResult<String> {
         .chars()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '.' | '_' | '-'));
     let ok_start = name.chars().next().is_some_and(|c| c.is_ascii_alphanumeric());
-    if ok_len && ok_chars && ok_start {
+    // The name becomes a folder: Windows drops a trailing dot ("noor." would
+    // share "noor"'s folder) and reserves device names such as "con".
+    let ok_folder = !name.ends_with('.') && fennoly_core::validate_name(&name).is_ok();
+    if ok_len && ok_chars && ok_start && ok_folder {
         Ok(name)
     } else {
         Err(AppError::bad(
@@ -207,6 +210,11 @@ mod tests {
         assert!(normalize_username("-noor").is_err());
         assert!(normalize_username("noor/../x").is_err());
         assert!(normalize_username("नूर").is_err());
+        assert!(normalize_username("noor.").is_err());
+        assert!(normalize_username("con").is_err());
+        assert!(normalize_username("com1").is_err());
+        assert!(normalize_username("nul.x").is_err());
+        assert!(normalize_username("console").is_ok());
     }
 
     #[tokio::test]

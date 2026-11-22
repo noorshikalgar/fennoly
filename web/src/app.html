@@ -9,18 +9,7 @@
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="any" />
 		<title>Fennoly</title>
-		<script>
-			// Apply the saved theme before first paint, so the page never flashes.
-			(function () {
-				try {
-					var t = localStorage.getItem('fennoly-theme') || 'system';
-					if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-					document.documentElement.dataset.theme = t;
-					var l = localStorage.getItem('fennoly-locale');
-					if (l) document.documentElement.lang = l;
-				} catch (e) {}
-			})();
-		</script>
+		<script src="%sveltekit.assets%/theme.js"></script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

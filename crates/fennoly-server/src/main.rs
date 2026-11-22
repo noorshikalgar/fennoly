@@ -87,6 +87,13 @@ fn app(state: AppState, cfg: &Config) -> Router {
         let index = ServeFile::new(dir.join("index.html"));
         app = app.fallback_service(ServeDir::new(dir).fallback(index));
     }
+    if cfg.secure_cookies {
+        // Served over HTTPS: tell browsers never to use plain HTTP again.
+        app = app.layer(SetResponseHeaderLayer::if_not_present(
+            HeaderName::from_static("strict-transport-security"),
+            HeaderValue::from_static("max-age=31536000"),
+        ));
+    }
     app.layer(SetResponseHeaderLayer::if_not_present(
         HeaderName::from_static("x-content-type-options"),
         HeaderValue::from_static("nosniff"),
@@ -98,6 +105,17 @@ fn app(state: AppState, cfg: &Config) -> Router {
     .layer(SetResponseHeaderLayer::if_not_present(
         HeaderName::from_static("x-frame-options"),
         HeaderValue::from_static("SAMEORIGIN"),
+    ))
+    // The web app adds its full policy (with script hashes) as a <meta> tag;
+    // this header adds what a meta tag cannot, and covers every response.
+    // File content sets its own, stricter sandbox policy.
+    .layer(SetResponseHeaderLayer::if_not_present(
+        HeaderName::from_static("content-security-policy"),
+        HeaderValue::from_static("frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"),
+    ))
+    .layer(SetResponseHeaderLayer::if_not_present(
+        HeaderName::from_static("permissions-policy"),
+        HeaderValue::from_static("camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"),
     ))
     .layer(TraceLayer::new_for_http())
     .with_state(state)

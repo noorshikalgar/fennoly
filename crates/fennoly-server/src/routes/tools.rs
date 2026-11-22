@@ -82,6 +82,7 @@ pub async fn preview(
     if tokio::fs::metadata(&out).await.is_err() {
         let input = r.path.clone();
         let tmp_out = out.with_extension(format!("{ext}.part"));
+        let _slot = super::content::HEAVY_WORK.acquire().await.map_err(|e| AppError::Internal(e.into()))?;
         match req.tool.as_str() {
             "image" => {
                 let opts = CompressOptions {
@@ -147,6 +148,7 @@ pub async fn apply(
     let id = match req.mode.as_str() {
         "copy" => {
             parent.require_write()?;
+            super::uploads::check_quota(&state, &parent, size.max(0) as u64).await?;
             let new_ext = if same_ext { old_ext.to_string() } else { format!(".{ext}") };
             let wanted = format!("{stem} (compressed){new_ext}");
             let name = access::free_name(&state, parent_id, &wanted).await?;

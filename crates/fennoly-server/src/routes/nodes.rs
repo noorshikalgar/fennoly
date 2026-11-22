@@ -2,6 +2,7 @@
 
 use axum::Json;
 use axum::extract::{Path, Query, State};
+use fennoly_core::Permission;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -153,6 +154,25 @@ pub async fn update_node(
     }
     if target.chain.iter().any(|c| c.id == id) {
         return Err(AppError::bad("a folder cannot be moved into itself"));
+    }
+    if target.node.space_id != r.node.space_id {
+        // Taking an item out of someone's space needs more than edit rights:
+        // a share editor could otherwise move the owner's files into their own.
+        if r.perm != Permission::Owner && r.space_kind() != "family" {
+            return Err(AppError::Forbidden);
+        }
+        let bytes: i64 = sqlx::query_scalar(
+            "WITH RECURSIVE sub AS (
+                 SELECT id, kind, size FROM nodes WHERE id = $1
+                 UNION ALL
+                 SELECT n.id, n.kind, n.size FROM nodes n JOIN sub s ON n.parent_id = s.id WHERE n.trashed_at IS NULL
+             )
+             SELECT COALESCE(SUM(size) FILTER (WHERE kind = 'file'), 0)::BIGINT FROM sub",
+        )
+        .bind(id)
+        .fetch_one(&state.db)
+        .await?;
+        super::uploads::check_quota(&state, &target, bytes.max(0) as u64).await?;
     }
 
     let same_place = target_id == current_parent;
