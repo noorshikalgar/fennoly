@@ -428,21 +428,22 @@ footer a { color: var(--muted); }
 		<div class="section-head center" style="text-align:center">
 			<span class="eyebrow">Install</span>
 			<h2>Up and running in a few minutes.</h2>
-			<p>You need a computer that stays on, like a home server, a NAS that runs Docker, a mini PC or an old laptop, with Docker installed.</p>
+			<p>You need a computer that stays on, like a home server, a NAS that runs Docker, a mini PC or an old laptop, with Docker installed. A ready-made image runs on both Intel/AMD and ARM machines.</p>
 		</div>
 		<div class="steps">
 			<div class="step"><div>
-				<h3>Get Fennoly</h3>
-<pre>git clone https://github.com/noorshikalgar/fennoly.git
-cd fennoly</pre>
+				<h3>Get the stack file</h3>
+				<p>In Portainer: <b>Stacks → Add stack → Web editor</b>, and paste <a href="https://github.com/noorshikalgar/fennoly/blob/main/deploy/portainer-stack.yml">portainer-stack.yml</a>. Or on the command line:</p>
+<pre>curl -LO https://raw.githubusercontent.com/noorshikalgar/fennoly/main/deploy/portainer-stack.yml</pre>
 			</div></div>
 			<div class="step"><div>
-				<h3>Set a database password and your time zone</h3>
-				<p>Edit <code>deploy/docker-compose.yml</code>: change <code>POSTGRES_PASSWORD</code> in both places, and set <code>TZ</code>.</p>
+				<h3>Set a database password</h3>
+				<p>Add the environment variable <code>POSTGRES_PASSWORD</code> (a long password of letters and digits). Optionally set <code>TZ</code> for backup times.</p>
 			</div></div>
 			<div class="step"><div>
 				<h3>Start it</h3>
-<pre>docker compose -f deploy/docker-compose.yml up -d --build</pre>
+				<p>Press <b>Deploy the stack</b> in Portainer, or:</p>
+<pre>POSTGRES_PASSWORD=choose-a-long-one docker compose -f portainer-stack.yml up -d</pre>
 			</div></div>
 			<div class="step"><div>
 				<h3>Open it and invite your family</h3>

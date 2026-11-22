@@ -106,7 +106,19 @@ Fennoly does one thing: keep a family's documents safe, organised and easy to re
 
 ## Install
 
-You need a computer that stays on (a home server, a NAS that runs Docker, a mini PC or an old laptop) with [Docker](https://docs.docker.com/get-docker/).
+You need a computer that stays on (a home server, a NAS that runs Docker, a mini PC or an old laptop) with [Docker](https://docs.docker.com/get-docker/). A ready-made image for amd64 and arm64 is published as `ghcr.io/noorshikalgar/fennoly`.
+
+### With Portainer (or any Docker UI)
+
+1. **Stacks → Add stack → Web editor**, and paste [`deploy/portainer-stack.yml`](deploy/portainer-stack.yml).
+2. Under **Environment variables**, add `POSTGRES_PASSWORD` (a long password, letters and digits). Optionally set `TZ` and `FENNOLY_PORT`.
+3. **Deploy**, open `http://<your-server-ip>:8686` and create the first account; it becomes the admin.
+
+To update later: **Stacks → fennoly → Pull and redeploy**.
+
+### With Docker Compose
+
+Build from source:
 
 ```bash
 git clone https://github.com/noorshikalgar/fennoly.git

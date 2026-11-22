@@ -1,0 +1,56 @@
+# Fennoly as a Portainer stack, using the ready-made image (nothing to build).
+#
+#   Portainer → Stacks → Add stack → Web editor → paste this file.
+#   Under "Environment variables" add:
+#     POSTGRES_PASSWORD   a long random password (letters and digits only)
+#   Optional:
+#     TZ                       time zone for backup schedules (default Asia/Kolkata)
+#     FENNOLY_PORT             port on the host (default 8686)
+#     FENNOLY_SECURE_COOKIES   true when Fennoly is served over HTTPS
+#     FENNOLY_MAX_UPLOAD_GB    largest single upload (default 50)
+#   Deploy, then open http://<server>:8686 and create the first account (the admin).
+#
+# Updating: Stacks → fennoly → "Pull and redeploy". Database changes apply on start.
+# Files and the database live in the named volumes below; back them up with
+# Fennoly's own Backups page (Admin → Backups).
+
+services:
+  fennoly:
+    image: ghcr.io/noorshikalgar/fennoly:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      FENNOLY_DATABASE_URL: postgres://fennoly:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/fennoly
+      FENNOLY_SECURE_COOKIES: ${FENNOLY_SECURE_COOKIES:-false}
+      FENNOLY_MAX_UPLOAD_GB: ${FENNOLY_MAX_UPLOAD_GB:-50}
+      FENNOLY_TRASH_DAYS: "30"
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      - "${FENNOLY_PORT:-8686}:8686"
+    volumes:
+      - fennoly-data:/data
+      # A USB drive or second disk for backups. Uncomment, make the folder
+      # writable by user 1000 (sudo chown -R 1000 /mnt/usb-backup), then add a
+      # "USB drive or folder" backup with the path /backups.
+      # - /mnt/usb-backup:/backups
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fennoly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: fennoly
+    volumes:
+      - fennoly-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fennoly"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  fennoly-data:
+  fennoly-db:
