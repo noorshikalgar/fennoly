@@ -338,21 +338,45 @@ pub fn spawn_scheduler(state: AppState) {
 /// Runs cut short by a shutdown or crash are marked failed, and their
 /// leftover files (the database dump, half-restored files) are removed.
 pub async fn recover_after_restart(state: &AppState) -> AppResult<()> {
-    let n = sqlx::query(
+    let interrupted: Vec<Uuid> = sqlx::query_scalar(
         "UPDATE backup_runs SET status = 'failed', finished_at = now(),
              error = 'The server stopped while this was running.'
-         WHERE status = 'running'",
+         WHERE status = 'running' RETURNING target_id",
     )
-    .execute(&state.db)
-    .await?
-    .rows_affected();
-    if n > 0 {
-        tracing::warn!(runs = n, "backup runs were interrupted by the last shutdown");
-    }
+    .fetch_all(&state.db)
+    .await?;
     remove_path(&state.storage.backup_staging()).await?;
     let restore_root = state.storage.tmp_dir().join("restore");
     remove_path(&restore_root).await?;
     tokio::fs::create_dir_all(&restore_root).await?;
+
+    let mut targets = interrupted;
+    targets.sort();
+    targets.dedup();
+    if !targets.is_empty() {
+        tracing::warn!(destinations = targets.len(), "backup runs were interrupted by the last shutdown");
+        // The interrupted restic left its lock behind; until it is removed every
+        // later run would be refused as "locked". The lock can only be ours.
+        let state = state.clone();
+        tokio::spawn(async move {
+            for id in targets {
+                if !state.claim_backup(id) {
+                    continue;
+                }
+                let result = async {
+                    let target = load_target(&state, id).await?;
+                    let dest = destination(&state, &target)?;
+                    state.engine.run(&dest, &["unlock", "--remove-all"], |_| {}).await
+                }
+                .await;
+                state.release_backup(id);
+                match result {
+                    Ok(_) => tracing::info!(%id, "removed the lock left by an interrupted backup"),
+                    Err(e) => tracing::warn!(%id, error = %e, "could not remove a leftover backup lock"),
+                }
+            }
+        });
+    }
     Ok(())
 }
 

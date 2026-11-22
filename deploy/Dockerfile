@@ -57,7 +57,7 @@ RUN apt-get update \
  && apt-get purge -y curl && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 1000 --home /data fennoly \
- && mkdir -p /data && chown fennoly /data
+ && mkdir -p /data /backups && chown fennoly /data /backups
 COPY --from=engines /usr/local/bin/restic /usr/local/bin/rclone /usr/local/bin/
 COPY --from=server /src/target/release/fennoly /usr/local/bin/fennoly
 COPY --from=web /src/web/build /app/web

@@ -7,3 +7,6 @@ deploy/fennoly-data
 deploy/fennoly-db
 .env
 .git
+target-test
+data-test
+tools

@@ -18,6 +18,11 @@ Set them up as an admin under **Backups** in the sidebar.
 
 Google Drive and OneDrive are planned next.
 
+**USB drives with Docker:** mount the drive into the container (see the
+commented `/backups` line in `deploy/docker-compose.yml`) and make sure the
+folder is writable by user 1000, which Fennoly runs as:
+`sudo chown -R 1000 /mnt/usb-backup`. Plug the drive in before the first backup.
+
 A good family setup is **two destinations**: a USB drive or NAS at home
 (fast restores) and a cloud bucket (survives fire and theft).
 
