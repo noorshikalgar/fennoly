@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fennoly · Your family's documents, in one private place</title>
+<meta name="description" content="Fennoly is a free, open-source, self-hosted family drive. Store, find, share and back up your family's important documents on a computer you own. English, हिंदी and मराठी.">
+<meta name="theme-color" content="#0f6e56">
+<meta property="og:title" content="Fennoly: your family's documents, in one private place">
+<meta property="og:description" content="A free, open-source family drive you run at home. Simple enough for everyone, private by design.">
+<meta property="og:image" content="screenshots/home.webp">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<style>
+:root {
+	--bg: #f4f7f5;
+	--surface: #ffffff;
+	--surface-2: #eaf1ed;
+	--text: #14201b;
+	--muted: #5b6b64;
+	--border: #dce6e0;
+	--primary: #0f6e56;
+	--primary-hover: #0c5a46;
+	--primary-soft: #e1f5ee;
+	--saffron: #e8730c;
+	--saffron-soft: #fdeedd;
+	--shadow: 0 1px 2px rgba(16, 40, 30, .06), 0 12px 32px -12px rgba(16, 40, 30, .18);
+	--radius: 20px;
+	color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #0d1311;
+		--surface: #141c19;
+		--surface-2: #1b2622;
+		--text: #e7efeb;
+		--muted: #9aaba3;
+		--border: #24322c;
+		--primary: #5fd0ab;
+		--primary-hover: #7adcbb;
+		--primary-soft: #133429;
+		--saffron: #f59a45;
+		--saffron-soft: #3a2614;
+		--shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 16px 40px -16px rgba(0, 0, 0, .6);
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+	-webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+code { font: .9em ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; background: var(--surface-2); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+a { color: var(--primary); }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
+h2 { font-size: clamp(1.8rem, 3.2vw, 2.5rem); }
+h3 { font-size: 1.12rem; letter-spacing: -0.01em; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.eyebrow {
+	display: inline-block; font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+	color: var(--primary); margin-bottom: 12px;
+}
+.btn {
+	display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 14px;
+	font-weight: 600; font-size: 1rem; text-decoration: none; transition: background .15s, transform .15s; cursor: pointer;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; }
+@media (prefers-color-scheme: dark) { .btn-primary { color: #06231a; } }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.btn svg { width: 20px; height: 20px; }
+
+/* nav */
+nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid transparent; }
+nav .wrap { display: flex; align-items: center; height: 68px; gap: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.25rem; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
+.brand img { width: 34px; height: 34px; }
+nav .links { display: flex; gap: 24px; margin-left: auto; }
+nav .links a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: .95rem; }
+nav .links a:hover { color: var(--text); }
+nav .btn { height: 40px; padding: 0 16px; font-size: .92rem; }
+@media (max-width: 860px) { nav .links { display: none; } nav .btn { margin-left: auto; } }
+
+/* hero */
+.hero { padding: 72px 0 40px; text-align: center; }
+.hero h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); max-width: 14ch; margin: 0 auto; }
+.hero h1 span { color: var(--primary); }
+.hero .lead { font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--muted); max-width: 46ch; margin: 22px auto 0; }
+.hero .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+.chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+.chip { font-size: .85rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; }
+.showcase { position: relative; margin: 56px auto 0; max-width: 1080px; }
+.frame { border-radius: 18px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
+.frame .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.frame .bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
+.showcase .phones { position: absolute; right: -40px; bottom: -60px; width: 42%; filter: drop-shadow(0 20px 30px rgba(0,0,0,.18)); }
+@media (max-width: 900px) { .showcase .phones { position: static; width: 100%; margin-top: 24px; } }
+
+section { padding: 96px 0; }
+.section-head { max-width: 720px; margin-bottom: 48px; }
+.section-head p { margin-top: 14px; font-size: 1.1rem; color: var(--muted); }
+.center { text-align: center; margin-left: auto; margin-right: auto; }
+
+/* why */
+.why { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid-3 { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+.why .card { background: var(--bg); }
+.card h3 { margin: 14px 0 8px; }
+.card p { color: var(--muted); font-size: .98rem; }
+.icon { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); }
+.icon svg { width: 24px; height: 24px; }
+.icon.warm { background: var(--saffron-soft); color: var(--saffron); }
+.answer { margin-top: 40px; padding: 32px; border-radius: var(--radius); background: var(--primary-soft); display: flex; gap: 22px; align-items: flex-start; }
+.answer img { width: 52px; height: 52px; flex: none; }
+.answer p { font-size: 1.08rem; }
+.answer strong { color: var(--primary); }
+
+/* features */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 980px) { .features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { .features { grid-template-columns: 1fr; } }
+.features ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); font-size: .95rem; }
+.features li { margin: 4px 0; }
+
+/* rows */
+.row { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: center; margin-bottom: 88px; }
+.row:last-child { margin-bottom: 0; }
+.row.flip { grid-template-columns: 1.25fr 1fr; }
+.row.flip .text { order: 2; }
+@media (max-width: 900px) { .row, .row.flip { grid-template-columns: 1fr; gap: 28px; } .row.flip .text { order: 0; } }
+.row h2 { font-size: clamp(1.6rem, 2.8vw, 2.2rem); }
+.row .text p { margin-top: 16px; color: var(--muted); font-size: 1.05rem; }
+.ticks { list-style: none; padding: 0; margin: 20px 0 0; }
+.ticks li { position: relative; padding-left: 30px; margin: 10px 0; }
+.ticks li::before {
+	content: ""; position: absolute; left: 0; top: 5px; width: 18px; height: 18px; border-radius: 50%;
+	background: var(--primary-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f6e56' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+.shot { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.stack { position: relative; }
+.stack .shot + .shot { position: absolute; width: 62%; right: -18px; bottom: -36px; }
+@media (max-width: 900px) { .stack .shot + .shot { position: static; width: 100%; margin-top: 16px; } }
+
+/* languages */
+.lang { background: linear-gradient(180deg, var(--surface), var(--bg)); border-top: 1px solid var(--border); }
+.hello { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 28px 0 44px; }
+.hello span { padding: 12px 20px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); font-size: 1.15rem; font-weight: 600; box-shadow: var(--shadow); }
+.themes { display: flex; gap: 10px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+.swatch { display: inline-flex; align-items: center; gap: 8px; font-size: .92rem; color: var(--muted); }
+.swatch i { width: 22px; height: 22px; border-radius: 7px; border: 1px solid var(--border); }
+
+/* install */
+.steps { counter-reset: step; display: grid; gap: 16px; max-width: 820px; margin: 0 auto; }
+.step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; align-items: start; }
+.step::before {
+	counter-increment: step; content: counter(step); width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+	background: var(--primary); color: #fff; font-weight: 800;
+}
+@media (prefers-color-scheme: dark) { .step::before { color: #06231a; } }
+.step p { color: var(--muted); margin-top: 4px; }
+pre {
+	margin: 12px 0 0; padding: 18px 20px; border-radius: 14px; background: #0f1916; color: #d7efe5; overflow-x: auto;
+	font: 14px/1.7 ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; border: 1px solid var(--border);
+}
+pre .c { color: #7f9a8f; }
+
+/* faq */
+.faq { max-width: 820px; margin: 0 auto; }
+details { border-bottom: 1px solid var(--border); padding: 20px 4px; }
+summary { cursor: pointer; font-weight: 650; font-size: 1.08rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--primary); font-weight: 400; font-size: 1.5rem; line-height: 1; }
+details[open] summary::after { content: "–"; }
+details p { margin-top: 12px; color: var(--muted); }
+
+/* footer cta */
+.final { text-align: center; }
+.final .box { background: var(--primary); color: #fff; border-radius: 28px; padding: 64px 28px; }
+@media (prefers-color-scheme: dark) { .final .box { background: var(--primary-soft); color: var(--text); } }
+.final h2 { color: inherit; }
+.final p { margin: 14px auto 28px; max-width: 46ch; opacity: .85; font-size: 1.1rem; }
+.final .btn-primary { background: #fff; color: #0f6e56; }
+@media (prefers-color-scheme: dark) { .final .btn-primary { background: var(--primary); color: #06231a; } }
+footer { padding: 40px 0 56px; color: var(--muted); font-size: .92rem; }
+footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; align-items: center; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+	<div class="wrap">
+		<a class="brand" href="#top"><img src="assets/logo.svg" alt="">Fennoly</a>
+		<div class="links">
+			<a href="#why">Why</a>
+			<a href="#features">Features</a>
+			<a href="#backups">Backups</a>
+			<a href="#languages">Languages</a>
+			<a href="#install">Install</a>
+			<a href="#faq">FAQ</a>
+		</div>
+		<a class="btn btn-ghost" href="https://github.com/noorshikalgar/fennoly">
+			<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+			GitHub
+		</a>
+	</div>
+</nav>
+
+<header class="hero" id="top">
+	<div class="wrap">
+		<h1>Your family's documents, in <span>one private place</span>.</h1>
+		<p class="lead">Fennoly is a free, open-source family drive you run at home. Store, find, share and back up the papers that matter, simply enough for everyone in the family.</p>
+		<div class="cta">
+			<a class="btn btn-primary" href="#install">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
+				Install on your server
+			</a>
+			<a class="btn btn-ghost" href="#features">See what it does</a>
+		</div>
+		<div class="chips">
+			<span class="chip">100% open source · AGPL-3.0</span>
+			<span class="chip">No subscriptions</span>
+			<span class="chip">No tracking</span>
+			<span class="chip">English · हिंदी · मराठी</span>
+		</div>
+		<div class="showcase">
+			<div class="frame">
+				<div class="bar"><i></i><i></i><i></i></div>
+				<img src="screenshots/home.webp" alt="Fennoly home screen with starred folders and recent photos" width="1600" height="1000">
+			</div>
+			<img class="phones" src="screenshots/phones.webp" alt="Fennoly on three phones in English, Hindi and Marathi" width="1400" height="964" loading="lazy">
+		</div>
+	</div>
+</header>
+
+<section class="why" id="why">
+	<div class="wrap">
+		<div class="section-head">
+			<span class="eyebrow">Why Fennoly</span>
+			<h2>Important papers are everywhere, except where you need them.</h2>
+			<p>ID cards, insurance policies, tax returns, school reports, property papers, medical records. Every family has them, and today they live in photo galleries, chat threads, email attachments and old pen drives. When you need one, you search everywhere. When a phone is lost, they are lost with it.</p>
+		</div>
+		<div class="grid-3">
+			<div class="card">
+				<div class="icon warm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></div>
+				<h3>Public clouds</h3>
+				<p>Your family's most sensitive documents sit on someone else's servers, behind a monthly bill that keeps growing.</p>
+			</div>
+			<div class="card">
+				<div class="icon warm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+				<h3>Do-everything suites</h3>
+				<p>Self-hosted suites can do everything, which makes them heavy to run and confusing for parents and grandparents.</p>
+			</div>
+			<div class="card">
+				<div class="icon warm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
+				<h3>Archive tools</h3>
+				<p>Document-archive tools are built for people who enjoy tagging and workflows, not for a family that just wants the ration card.</p>
+			</div>
+		</div>
+		<div class="answer">
+			<img src="assets/logo.svg" alt="">
+			<p><strong>Fennoly does one thing well:</strong> it keeps a family's documents safe, organised and easy to reach. It runs on a small home server or an old PC, speaks your family's language, works beautifully on phones, and keeps your files as ordinary folders on disk, so you are never locked in.</p>
+		</div>
+	</div>
+</section>
+
+<section id="features">
+	<div class="wrap">
+		<div class="section-head center" style="text-align:center">
+			<span class="eyebrow">Features</span>
+			<h2>Everything a family drive needs. Nothing it doesn't.</h2>
+		</div>
+		<div class="features">
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg></div>
+				<h3>Files and folders</h3>
+				<ul><li>Private <b>My files</b> for each person</li><li>A shared <b>Family space</b></li><li>Search, starred, recent, trash</li><li>Zip download of folders</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8m-4-4 4-4 4 4"/><path d="M20 16.7A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg></div>
+				<h3>Uploads that don't break</h3>
+				<ul><li>Parallel, checked chunks</li><li>Resume after dropped Wi-Fi or a reload</li><li>Drag and drop whole folders</li><li>Up to 50 GB per file</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+				<h3>Built-in viewer</h3>
+				<ul><li>Photos, PDFs, videos, audio, text</li><li>Swipe between files on phones</li><li>Thumbnails for photos</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></div>
+				<h3>Sharing</h3>
+				<ul><li>Share with family as viewer or editor</li><li>Public links with password and expiry</li><li>Turn downloads on or off</li><li>See what you shared, with whom</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M9 9h6v6H9z"/></svg></div>
+				<h3>Compress photos and PDFs</h3>
+				<ul><li>Live before / after size</li><li>Choose quality and size</li><li>Save a copy or replace</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+				<h3>Automatic backups</h3>
+				<ul><li>USB drive, NAS, SFTP or S3 cloud</li><li>Encrypted, scheduled, incremental</li><li>Restore any file from any day</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg></div>
+				<h3>Your language, your look</h3>
+				<ul><li>English, हिंदी and मराठी</li><li>Light, Dark and Saffron themes</li><li>Installs like an app on any phone</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+				<h3>Family accounts</h3>
+				<ul><li>Add members, reset passwords</li><li>Storage limit per person</li><li>Admin and member roles</li></ul>
+			</div>
+			<div class="card">
+				<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg></div>
+				<h3>Private and secure</h3>
+				<ul><li>Runs on your hardware, no tracking</li><li>Strong password protection</li><li>Pen-tested: 138 attack checks</li></ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section style="padding-top:0">
+	<div class="wrap">
+		<div class="row">
+			<div class="text">
+				<span class="eyebrow">Sharing</span>
+				<h2>Share with family. Or with anyone, safely.</h2>
+				<p>Give a family member access to a folder in two taps, as a viewer or an editor. For everyone else, create a public link: protect it with a password, let it expire, and decide whether people may download.</p>
+				<ul class="ticks">
+					<li>Visitors need no account; they see only what you shared</li>
+					<li>View and download counts on every link</li>
+					<li>One page shows everything you have shared</li>
+				</ul>
+			</div>
+			<div class="stack">
+				<div class="shot"><img src="screenshots/share.webp" alt="Sharing a folder with family members" loading="lazy" width="1600" height="1000"></div>
+				<div class="shot"><img src="screenshots/link.webp" alt="Creating a public link" loading="lazy" width="1600" height="1000"></div>
+			</div>
+		</div>
+
+		<div class="row flip">
+			<div class="text">
+				<span class="eyebrow">Uploads</span>
+				<h2>Big files, bad Wi-Fi, no problem.</h2>
+				<p>Fennoly splits large files into chunks, sends several at once, and checks each one. If the network drops, the phone switches to mobile data, or the page is closed, the upload picks up exactly where it stopped. Nothing is ever saved half-written.</p>
+				<ul class="ticks">
+					<li>Tested with a 5-minute outage on a slow line</li>
+					<li>Resumes after a reload or a server restart</li>
+					<li>Upload whole folders by dragging them in</li>
+				</ul>
+			</div>
+			<div class="shot"><img src="screenshots/photos-dark.webp" alt="A folder of photos in the dark theme" loading="lazy" width="1600" height="1000"></div>
+		</div>
+
+		<div class="row">
+			<div class="text">
+				<span class="eyebrow">Tools</span>
+				<h2>Shrink that 3 MB photo before you send it.</h2>
+				<p>Forms and portals often limit file sizes. Compress a photo or a PDF right where it is stored, see the new size before you commit, and keep the original if you like.</p>
+			</div>
+			<div class="shot"><img src="screenshots/compress.webp" alt="Compressing a 3 MB photo to 406 KB" loading="lazy" width="1600" height="1000"></div>
+		</div>
+
+		<div class="row flip" id="backups">
+			<div class="text">
+				<span class="eyebrow">Backups</span>
+				<h2>One copy is not a backup. Fennoly keeps another.</h2>
+				<p>Choose where backups go, and Fennoly takes care of the rest every night: only changes are stored, old backups are thinned out, and a monthly check makes sure the copies can still be read. If something goes wrong, admins see a warning.</p>
+				<ul class="ticks">
+					<li>USB drive, NAS (SMB), SFTP, or S3 cloud such as Backblaze B2</li>
+					<li>Encrypted by default, with a printable recovery key</li>
+					<li>Restore any file or folder from any backup</li>
+					<li>Includes the database, so a new server can be rebuilt</li>
+				</ul>
+			</div>
+			<div class="shot"><img src="screenshots/backups.webp" alt="The backups page with a USB drive and a NAS" loading="lazy" width="1600" height="1000"></div>
+		</div>
+	</div>
+</section>
+
+<section class="lang" id="languages">
+	<div class="wrap" style="text-align:center">
+		<span class="eyebrow">For everyone at home</span>
+		<h2>Speaks your family's language.</h2>
+		<p class="muted" style="max-width:52ch;margin:14px auto 0;font-size:1.1rem">Every screen is available in English, Hindi and Marathi, and each person picks their own. Three themes, comfortable on any screen, from a phone in the kitchen to a laptop at the desk.</p>
+		<div class="hello"><span>Welcome</span><span>स्वागत है</span><span>स्वागत आहे</span></div>
+		<img src="screenshots/phones.webp" alt="Fennoly on phones in English, Hindi and Marathi" loading="lazy" width="1400" height="964" style="width:100%;max-width:820px;height:auto;margin:0 auto">
+		<div class="themes">
+			<span class="swatch"><i style="background:#f4f7f5"></i>Light</span>
+			<span class="swatch"><i style="background:#0d1311"></i>Dark</span>
+			<span class="swatch"><i style="background:#fdeedd"></i>Saffron</span>
+		</div>
+	</div>
+</section>
+
+<section id="security">
+	<div class="wrap">
+		<div class="row">
+			<div class="text">
+				<span class="eyebrow">Privacy</span>
+				<h2>Your documents never leave your home.</h2>
+				<p>Fennoly runs on a computer you own. There are no accounts with us, no analytics and no calls to anyone's cloud. This page itself loads nothing from other sites.</p>
+				<ul class="ticks">
+					<li>Files are plain folders on disk: take them anywhere</li>
+					<li>Passwords hashed with Argon2; repeated guesses are locked out</li>
+					<li>Uploaded files can never run code in the app</li>
+					<li>Tested like an attacker would: 138 checks, 0 holes</li>
+				</ul>
+			</div>
+			<div class="shot"><img src="screenshots/members.webp" alt="Family members with storage limits" loading="lazy" width="1600" height="1000"></div>
+		</div>
+	</div>
+</section>
+
+<section id="install" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+	<div class="wrap">
+		<div class="section-head center" style="text-align:center">
+			<span class="eyebrow">Install</span>
+			<h2>Up and running in a few minutes.</h2>
+			<p>You need a computer that stays on, like a home server, a NAS that runs Docker, a mini PC or an old laptop, with Docker installed.</p>
+		</div>
+		<div class="steps">
+			<div class="step"><div>
+				<h3>Get Fennoly</h3>
+<pre>git clone https://github.com/noorshikalgar/fennoly.git
+cd fennoly</pre>
+			</div></div>
+			<div class="step"><div>
+				<h3>Set a database password and your time zone</h3>
+				<p>Edit <code>deploy/docker-compose.yml</code>: change <code>POSTGRES_PASSWORD</code> in both places, and set <code>TZ</code>.</p>
+			</div></div>
+			<div class="step"><div>
+				<h3>Start it</h3>
+<pre>docker compose -f deploy/docker-compose.yml up -d --build</pre>
+			</div></div>
+			<div class="step"><div>
+				<h3>Open it and invite your family</h3>
+				<p>Visit <code>http://&lt;your-server&gt;:8686</code>, create the first account (it becomes the admin), add family members, and set up a backup.</p>
+			</div></div>
+		</div>
+	</div>
+</section>
+
+<section id="faq">
+	<div class="wrap">
+		<div class="section-head center" style="text-align:center">
+			<span class="eyebrow">Questions</span>
+			<h2>Good to know</h2>
+		</div>
+		<div class="faq">
+			<details>
+				<summary>Is it really free?</summary>
+				<p>Yes. Fennoly is open source under the AGPL-3.0 licence. There is no paid version, no premium tier and no account to create with anyone.</p>
+			</details>
+			<details>
+				<summary>What hardware do I need?</summary>
+				<p>Anything that can run Docker and stay switched on: a mini PC, a NAS, a Raspberry Pi class machine or an old laptop. Disk space is what matters most.</p>
+			</details>
+			<details>
+				<summary>Can I use it away from home?</summary>
+				<p>Yes. Put it behind HTTPS (for example with Caddy) or use a private network such as Tailscale, and your family can reach it from anywhere, on any device.</p>
+			</details>
+			<details>
+				<summary>What if I want to stop using Fennoly?</summary>
+				<p>Your files are stored as ordinary folders with their real names. Copy the folder and you have everything, no export needed.</p>
+			</details>
+			<details>
+				<summary>Are my files encrypted?</summary>
+				<p>Backups are encrypted by default. Files on your own server are stored as they are, so they stay readable without Fennoly; use your operating system's disk encryption if you want them encrypted at rest too.</p>
+			</details>
+			<details>
+				<summary>Is it ready?</summary>
+				<p>Fennoly is young (version 0.1) and under active development. It is tested end to end, including a real backup and restore drill and a security test. As with any new software, set up backups and expect changes before 1.0. Coming next: Google Drive and OneDrive backups, full restore from the setup screen, and search inside scanned documents.</p>
+			</details>
+		</div>
+	</div>
+</section>
+
+<section class="final" style="padding-top:0">
+	<div class="wrap">
+		<div class="box">
+			<h2>Give your family's papers a home.</h2>
+			<p>Free and open source. Runs on hardware you own. Ready when you need that one document.</p>
+			<a class="btn btn-primary" href="https://github.com/noorshikalgar/fennoly">Get Fennoly on GitHub</a>
+		</div>
+	</div>
+</section>
+
+<footer>
+	<div class="wrap">
+		<a class="brand" href="#top" style="font-size:1.05rem"><img src="assets/logo.svg" alt="" style="width:26px;height:26px">Fennoly</a>
+		<span>Open source under <a href="https://github.com/noorshikalgar/fennoly/blob/main/LICENSE">AGPL-3.0</a> · <a href="https://github.com/noorshikalgar/fennoly">GitHub</a> · All names and files in the screenshots are made up.</span>
+	</div>
+</footer>
+
+</body>
+</html>
