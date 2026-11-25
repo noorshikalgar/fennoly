@@ -91,9 +91,9 @@ export const api = {
 	stopSharing: (id: string) => del(`/nodes/${id}/sharing`),
 
 	links: (id: string) => get<ShareLink[]>(`/nodes/${id}/links`),
-	createLink: (id: string, b: { allow_download: boolean; password?: string; expires_at?: string | null }) =>
+	createLink: (id: string, b: { password?: string; expires_at?: string | null }) =>
 		post<ShareLink>(`/nodes/${id}/links`, b),
-	updateLink: (linkId: string, b: { allow_download?: boolean; password?: string; expires_at?: string | null }) =>
+	updateLink: (linkId: string, b: { password?: string; expires_at?: string | null }) =>
 		patch<ShareLink>(`/links/${linkId}`, b),
 	deleteLink: (linkId: string) => del(`/links/${linkId}`),
 

@@ -214,7 +214,7 @@ def main():
     asha.call("POST", f"/nodes/{insurance}/shares", {"user_id": users["rohan"]["id"], "permission": "editor"})
     asha.call("POST", f"/nodes/{school}/shares", {"user_id": users["meera"]["id"], "permission": "viewer"})
     asha.call("POST", f"/nodes/{goa}/shares", {"user_id": users["aaji"]["id"], "permission": "viewer"})
-    link = asha.call("POST", f"/nodes/{goa}/links", {"allow_download": True})
+    link = asha.call("POST", f"/nodes/{goa}/links", {})
 
     # Backups: a USB drive with a finished backup, and a NAS for weekly runs.
     usb = asha.call("POST", "/admin/backups", {"name": "USB drive", "kind": "local", "settings": {"path": "/backups/fennoly"},

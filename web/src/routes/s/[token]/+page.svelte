@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Public link page: no account needed. Handles password-protected,
 	// expired and deleted links, a single file, or a browsable folder.
-	import { ChevronRight, Download, Eye, KeyRound, LinkIcon, Timer, X } from '@lucide/svelte';
+	import { ChevronRight, Download, KeyRound, LinkIcon, Timer, X } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ApiError, api, publicContentUrl, publicThumbUrl, publicZipUrl } from '$lib/api';
@@ -170,14 +170,10 @@
 						{#if info.expires_at}<span class="inline-flex items-center gap-1"><Timer size={14} />{t('links.expiresOn', { date: formatDate(info.expires_at) })}</span>{/if}
 					</p>
 				</div>
-				{#if info.allow_download}
-					{#if info.root.kind === 'file'}
-						<a class="btn-primary" href={publicContentUrl(token, info.root.id, true)}><Download size={18} />{t('common.download')}</a>
-					{:else if folder}
-						<a class="btn-primary" href={publicZipUrl(token, [folder.node.id])}><Download size={18} />{t('public.downloadAll')}</a>
-					{/if}
-				{:else}
-					<span class="inline-flex items-center gap-1.5 text-xs font-medium text-muted bg-surface-2 rounded-full px-3 py-1.5"><Eye size={14} />{t('public.viewOnlyNote')}</span>
+				{#if info.root.kind === 'file'}
+					<a class="btn-primary" href={publicContentUrl(token, info.root.id, true)}><Download size={18} />{t('common.download')}</a>
+				{:else if folder}
+					<a class="btn-primary" href={publicZipUrl(token, [folder.node.id])}><Download size={18} />{t('public.downloadAll')}</a>
 				{/if}
 			</div>
 
@@ -207,9 +203,7 @@
 										<span class="block truncate text-xs text-muted">{n.kind === 'file' ? `${formatBytes(n.size)} · ` : ''}{relativeTime(n.modified_at)}</span>
 									</span>
 								</button>
-								{#if info.allow_download}
-									<a class="icon-btn" href={n.kind === 'file' ? publicContentUrl(token, n.id, true) : publicZipUrl(token, [n.id])} aria-label={t('common.download')} title={t('common.download')}><Download size={18} /></a>
-								{/if}
+								<a class="icon-btn" href={n.kind === 'file' ? publicContentUrl(token, n.id, true) : publicZipUrl(token, [n.id])} aria-label={t('common.download')} title={t('common.download')}><Download size={18} /></a>
 							</div>
 						</li>
 					{:else}
@@ -231,9 +225,7 @@
 				<div class="truncate font-medium">{preview.name}</div>
 				<div class="text-xs text-white/60">{formatBytes(preview.size)}</div>
 			</div>
-			{#if info?.allow_download}
-				<a class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center" href={publicContentUrl(token, preview.id, true)} aria-label={t('common.download')}><Download size={19} /></a>
-			{/if}
+			<a class="size-10 rounded-full hover:bg-white/10 flex items-center justify-center" href={publicContentUrl(token, preview.id, true)} aria-label={t('common.download')}><Download size={19} /></a>
 		</header>
 		<div class="flex-1 min-h-0 flex items-center justify-center p-2 sm:p-6">
 			{@render previewBody(preview)}

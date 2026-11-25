@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Copy, Download, Eye, KeyRound, Link2, Plus, Timer, Trash } from '@lucide/svelte';
+	import { Copy, KeyRound, Link2, Plus, Timer, Trash } from '@lucide/svelte';
 	import { api, linkUrl } from '$lib/api';
 	import { canLink, copyText, reportError } from '$lib/actions';
 	import { formatDate, relativeTime } from '$lib/format';
@@ -17,7 +17,6 @@
 	let showForm = $state(false);
 
 	// New-link form
-	let allowDownload = $state(true);
 	let password = $state('');
 	let expiry = $state<'never' | '1' | '7' | '30' | 'custom'>('never');
 	let customDate = $state('');
@@ -54,7 +53,6 @@
 		creating = true;
 		try {
 			const link = await api.createLink(node.id, {
-				allow_download: allowDownload,
 				password: password || undefined,
 				expires_at: expiresAt()
 			});
@@ -72,16 +70,6 @@
 
 	async function copy(link: ShareLink) {
 		if (await copyText(linkUrl(link.token))) toast(t('links.copied'), 'success');
-	}
-
-	async function toggleDownload(link: ShareLink) {
-		try {
-			const updated = await api.updateLink(link.id, { allow_download: !link.allow_download });
-			links = links.map((l) => (l.id === link.id ? updated : l));
-			toast(t('links.saved'), 'success');
-		} catch (e) {
-			reportError(e);
-		}
 	}
 
 	async function removePassword(link: ShareLink) {
@@ -134,14 +122,6 @@
 							</button>
 						</div>
 						<div class="flex flex-wrap items-center gap-1.5 mt-2.5 text-xs">
-							<button
-								class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border transition-colors
-									{link.allow_download ? 'border-primary/30 bg-primary-soft text-primary' : 'border-border text-muted hover:bg-surface-2'}"
-								onclick={() => toggleDownload(link)}
-								title={t('links.allowDownload')}
-							>
-								{#if link.allow_download}<Download size={13} />{t('links.canDownload')}{:else}<Eye size={13} />{t('links.viewOnly')}{/if}
-							</button>
 							{#if link.has_password}
 								<button class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-border text-muted hover:bg-surface-2" title={t('links.removePassword')} onclick={() => removePassword(link)}>
 									<KeyRound size={13} />{t('links.protected')} ×
@@ -164,23 +144,6 @@
 
 		{#if showForm}
 			<form id="new-link" class="rounded-2xl bg-surface-2 p-4 space-y-4" onsubmit={create}>
-				<label class="flex items-start gap-3 cursor-pointer">
-					<button
-						type="button"
-						role="switch"
-						aria-checked={allowDownload}
-						aria-label={t('links.allowDownload')}
-						class="mt-0.5 relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors {allowDownload ? 'bg-primary' : 'bg-surface-3'}"
-						onclick={() => (allowDownload = !allowDownload)}
-					>
-						<span class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform {allowDownload ? 'translate-x-5' : ''}"></span>
-					</button>
-					<span>
-						<span class="block text-sm font-medium">{t('links.allowDownload')}</span>
-						<span class="block text-xs text-muted">{t('links.allowDownloadHint')}</span>
-					</span>
-				</label>
-
 				<div>
 					<label class="label" for="link-pass">{t('links.password')}</label>
 					<input id="link-pass" class="input" type="password" autocomplete="new-password" minlength="4" bind:value={password} />

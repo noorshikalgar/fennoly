@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Everything I have shared: with which people (and their permission) and
 	// through which public links, with quick manage and stop-sharing actions.
-	import { Copy, Download, Eye, KeyRound, Link2, Share2, Timer, Users, X } from '@lucide/svelte';
+	import { Copy, KeyRound, Link2, Share2, Timer, Users, X } from '@lucide/svelte';
 	import { api, linkUrl, thumbUrl } from '$lib/api';
 	import { canLink, canShare, copyText, openNode, reportError } from '$lib/actions';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -118,9 +118,6 @@
 						<ul class="space-y-2">
 							{#each item.links as l (l.id)}
 								<li class="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs {l.expired ? 'opacity-60' : ''}">
-									<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full {l.allow_download ? 'bg-primary-soft text-primary' : 'bg-surface-2 text-muted'}">
-										{#if l.allow_download}<Download size={12} />{t('links.canDownload')}{:else}<Eye size={12} />{t('links.viewOnly')}{/if}
-									</span>
 									{#if l.has_password}<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-2 text-muted"><KeyRound size={12} />{t('links.protected')}</span>{/if}
 									<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-2 {l.expired ? 'text-danger' : 'text-muted'}">
 										<Timer size={12} />{l.expired ? t('links.expired') : l.expires_at ? t('links.expiresOn', { date: formatDate(l.expires_at) }) : t('links.noExpiry')}

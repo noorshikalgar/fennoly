@@ -95,7 +95,6 @@ export interface ShareLink {
 	id: string;
 	node_id: string;
 	token: string;
-	allow_download: boolean;
 	has_password: boolean;
 	expires_at: string | null;
 	expired: boolean;
@@ -124,7 +123,6 @@ export interface PublicNode {
 
 export interface PublicInfo {
 	root: PublicNode;
-	allow_download: boolean;
 	shared_by: string;
 	expires_at: string | null;
 }

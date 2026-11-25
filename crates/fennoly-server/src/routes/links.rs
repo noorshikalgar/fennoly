@@ -1,5 +1,5 @@
 //! Public links: share a file or folder with anyone who has the URL,
-//! optionally with a password, an expiry date and download turned off.
+//! optionally with a password and an expiry date.
 //!
 //! Management (`/api/nodes/{id}/links`, `/api/links/{id}`) needs a signed-in
 //! user who may link the item. Public access (`/api/public/{token}/...`)
@@ -35,7 +35,6 @@ pub struct LinkRow {
     pub node_id: Uuid,
     pub token: String,
     pub created_by: Option<Uuid>,
-    pub allow_download: bool,
     pub password_hash: Option<String>,
     pub expires_at: Option<DateTime<Utc>>,
     pub view_count: i64,
@@ -44,7 +43,7 @@ pub struct LinkRow {
     pub created_at: DateTime<Utc>,
 }
 
-const LINK_COLS: &str = "id, node_id, token, created_by, allow_download, password_hash, expires_at, \
+const LINK_COLS: &str = "id, node_id, token, created_by, password_hash, expires_at, \
      view_count, download_count, last_accessed_at, created_at";
 
 #[derive(Debug, Clone, Serialize)]
@@ -52,7 +51,6 @@ pub struct LinkDto {
     pub id: Uuid,
     pub node_id: Uuid,
     pub token: String,
-    pub allow_download: bool,
     pub has_password: bool,
     pub expires_at: Option<DateTime<Utc>>,
     pub expired: bool,
@@ -69,7 +67,6 @@ impl From<LinkRow> for LinkDto {
             id: l.id,
             node_id: l.node_id,
             token: l.token,
-            allow_download: l.allow_download,
             has_password: l.password_hash.is_some(),
             expires_at: l.expires_at,
             view_count: l.view_count,
@@ -107,15 +104,10 @@ pub async fn list(State(state): State<AppState>, user: CurrentUser, Path(id): Pa
 
 #[derive(Deserialize)]
 pub struct CreateLink {
-    #[serde(default = "yes")]
-    allow_download: bool,
     password: Option<String>,
     expires_at: Option<DateTime<Utc>>,
 }
 
-fn yes() -> bool {
-    true
-}
 
 async fn hash_link_password(password: Option<String>) -> AppResult<Option<String>> {
     match password.map(|p| p.trim().to_string()).filter(|p| !p.is_empty()) {
@@ -145,13 +137,12 @@ pub async fn create(
     rand::rngs::OsRng.fill_bytes(&mut bytes);
     let token = URL_SAFE_NO_PAD.encode(bytes);
     let row: LinkRow = sqlx::query_as(&format!(
-        "INSERT INTO links (node_id, token, created_by, allow_download, password_hash, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING {LINK_COLS}"
+        "INSERT INTO links (node_id, token, created_by, password_hash, expires_at)
+         VALUES ($1, $2, $3, $4, $5) RETURNING {LINK_COLS}"
     ))
     .bind(id)
     .bind(&token)
     .bind(user.id)
-    .bind(req.allow_download)
     .bind(password_hash)
     .bind(req.expires_at)
     .fetch_one(&state.db)
@@ -161,7 +152,6 @@ pub async fn create(
 
 #[derive(Deserialize)]
 pub struct UpdateLink {
-    allow_download: Option<bool>,
     /// A new password; an empty string removes the password.
     password: Option<String>,
     /// `null` removes the expiry.
@@ -197,7 +187,6 @@ pub async fn update(
     Json(req): Json<UpdateLink>,
 ) -> AppResult<Json<LinkDto>> {
     let link = managed_link(&state, &user, link_id).await?;
-    let allow_download = req.allow_download.unwrap_or(link.allow_download);
     let password_hash = match req.password {
         Some(p) => hash_link_password(Some(p)).await?,
         None => link.password_hash,
@@ -210,10 +199,9 @@ pub async fn update(
         None => link.expires_at,
     };
     let row: LinkRow = sqlx::query_as(&format!(
-        "UPDATE links SET allow_download = $1, password_hash = $2, expires_at = $3
-         WHERE id = $4 RETURNING {LINK_COLS}"
+        "UPDATE links SET password_hash = $1, expires_at = $2
+         WHERE id = $3 RETURNING {LINK_COLS}"
     ))
-    .bind(allow_download)
     .bind(password_hash)
     .bind(expires_at)
     .bind(link_id)
@@ -299,7 +287,6 @@ impl From<&Resolved> for PublicNode {
 #[derive(Serialize)]
 pub struct PublicInfo {
     root: PublicNode,
-    allow_download: bool,
     shared_by: String,
     expires_at: Option<DateTime<Utc>>,
 }
@@ -317,7 +304,6 @@ pub async fn info(State(state): State<AppState>, jar: CookieJar, Path(token): Pa
         .await?;
     Ok(Json(PublicInfo {
         root: (&root).into(),
-        allow_download: link.allow_download,
         shared_by: shared_by.unwrap_or_default(),
         expires_at: link.expires_at,
     }))
@@ -411,9 +397,6 @@ pub async fn file_content(
 ) -> AppResult<Response> {
     let link = open_link(&state, &token, &jar).await?;
     let download = q.download.is_some();
-    if download && !link.allow_download {
-        return Err(AppError::Forbidden);
-    }
     let r = access::resolve_in_link(&state, link.node_id, id).await?;
     if download {
         sqlx::query("UPDATE links SET download_count = download_count + 1, last_accessed_at = now() WHERE id = $1")
@@ -441,9 +424,6 @@ pub async fn zip(
     Query(q): Query<ZipQuery>,
 ) -> AppResult<Response> {
     let link = open_link(&state, &token, &jar).await?;
-    if !link.allow_download {
-        return Err(AppError::Forbidden);
-    }
     let mut items = Vec::new();
     for id in content::parse_ids(&q.ids)? {
         let r = access::resolve_in_link(&state, link.node_id, id).await?;

@@ -145,9 +145,9 @@ api "$ADMIN" PUT "/api/nodes/$NODE_P/star" > /dev/null
 [ "$(api "$ADMIN" GET /api/starred | jget "[0]['id']")" = "$NODE_P" ] || fail "starred list"
 ok "search by Hindi word, star and starred list"
 
-# Public links: password, view-only, then downloads allowed.
+# Public links: password, then view and download.
 ANON="$WORK/anon.jar"
-LINK=$(api "$ADMIN" POST "/api/nodes/$FOLDER/links" '{"allow_download":false,"password":"open1234"}')
+LINK=$(api "$ADMIN" POST "/api/nodes/$FOLDER/links" '{"password":"open1234"}')
 TOKEN_L=$(echo "$LINK" | jget "['token']"); LINK_ID=$(echo "$LINK" | jget "['id']")
 code=$(curl -s -o /dev/null -w '%{http_code}' -c "$ANON" -b "$ANON" "$BASE/api/public/$TOKEN_L")
 [ "$code" = "401" ] || fail "password link needs unlocking (got $code)"
@@ -157,12 +157,9 @@ curl -sf -c "$ANON" -b "$ANON" -H 'content-type: application/json' -d '{"passwor
 [ "$(curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L" | jget "['root']['name']")" = "Tax 2026" ] || fail "unlocked link shows the folder"
 [ "$(curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L/folder/$FOLDER" | jget "['children'].__len__()")" = "4" ] || fail "link lists folder contents"
 code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A")
-[ "$code" = "200" ] || fail "view-only link can preview (got $code)"
-code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A?download=1")
-[ "$code" = "403" ] || fail "view-only link cannot download (got $code)"
+[ "$code" = "200" ] || fail "unlocked link can preview (got $code)"
 code=$(curl -s -o /dev/null -w '%{http_code}' -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$HOME_ID")
 [ "$code" = "404" ] || fail "link cannot reach outside the shared folder (got $code)"
-api "$ADMIN" PATCH "/api/links/$LINK_ID" '{"allow_download":true}' > /dev/null
 curl -sf -b "$ANON" "$BASE/api/public/$TOKEN_L/content/$NODE_A?download=1" -o "$WORK/pub.out"
 cmp -s "$WORK/a.bin" "$WORK/pub.out" || fail "public download matches"
 code=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH -b "$ADMIN" -H 'content-type: application/json' -d '{"expires_at":"2001-01-01T00:00:00Z"}' "$BASE/api/links/$LINK_ID")
