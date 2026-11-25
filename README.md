@@ -54,7 +54,7 @@ Fennoly does one thing: keep a family's documents safe, organised and easy to re
 
 ### Sharing
 - Share with family members as **Can view** or **Can edit**.
-- **Public links** for anyone else: optional **password**, **expiry date**, and **download on/off**, with view and download counts.
+- **Public links** for anyone else, with an optional **password** and **expiry date**, plus view and download counts. Anyone who opens a link can view and download what it shares.
 - **Shared with me** and **Shared by me** pages to see who has what.
 
 ### Built-in tools
