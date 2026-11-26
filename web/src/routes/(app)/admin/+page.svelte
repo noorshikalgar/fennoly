@@ -7,14 +7,16 @@
 	import Menu, { type MenuItem } from '$lib/components/Menu.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import { formatBytes, relativeTime } from '$lib/format';
-	import { i18n, t } from '$lib/i18n/index.svelte';
+	import { LANGUAGES, i18n, t } from '$lib/i18n/index.svelte';
 	import { session, toast } from '$lib/stores.svelte';
-	import type { AdminUser } from '$lib/types';
+	import type { AdminUser, Locale } from '$lib/types';
 	import { confirmDialog, promptDialog, ui } from '$lib/ui.svelte';
 
 	let users = $state<AdminUser[]>([]);
 	let adding = $state(false);
 	let form = $state({ display_name: '', username: '', password: '', role: 'member' });
+	/** The new member's language: what their app (and welcome tour) starts in. */
+	let memberLocale = $state<Locale>(i18n.locale);
 	let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
 
 	async function load() {
@@ -35,7 +37,7 @@
 	async function create(e: SubmitEvent) {
 		e.preventDefault();
 		try {
-			const u = await api.adminCreate({ ...form, locale: i18n.locale });
+			const u = await api.adminCreate({ ...form, locale: memberLocale });
 			toast(t('admin.added', { name: u.display_name }), 'success');
 			adding = false;
 			form = { display_name: '', username: '', password: '', role: 'member' };
@@ -195,6 +197,22 @@
 			<div>
 				<label class="label" for="a-pass">{t('admin.password')}</label>
 				<input id="a-pass" class="input" type="password" bind:value={form.password} minlength="8" autocomplete="new-password" required />
+			</div>
+			<div>
+				<span class="label">{t('admin.language')}</span>
+				<div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('admin.language')}>
+					{#each LANGUAGES as lang (lang.code)}
+						<button
+							type="button"
+							role="radio"
+							aria-checked={memberLocale === lang.code}
+							lang={lang.code}
+							class="h-11 rounded-xl border text-sm font-medium {memberLocale === lang.code ? 'border-primary bg-primary-soft text-primary' : 'border-border hover:bg-surface-2'}"
+							onclick={() => (memberLocale = lang.code)}>{lang.label}</button
+						>
+					{/each}
+				</div>
+				<p class="text-xs text-muted mt-1.5">{t('admin.languageHint')}</p>
 			</div>
 			<div>
 				<span class="label">{t('admin.role')}</span>

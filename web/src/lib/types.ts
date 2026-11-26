@@ -14,6 +14,18 @@ export interface Me {
 	used_bytes: number;
 	home_id: string | null;
 	family_id: string | null;
+	/** The welcome tour has been seen or skipped. */
+	tour_seen: boolean;
+	/** The getting-started checklist was put away. */
+	checklist_hidden: boolean;
+}
+
+/** How far the family has got, for the getting-started checklist. */
+export interface Progress {
+	members: number;
+	family_items: number;
+	shares: number;
+	backups: number;
 }
 
 export interface FileNode {

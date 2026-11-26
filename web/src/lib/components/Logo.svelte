@@ -16,6 +16,6 @@
 		<path d="M33 50c9-4 15-14 12-27-9 3-14 13-12 27z" fill="#E1F5EE" />
 	</svg>
 	{#if wordmark}
-		<span class="font-bold tracking-[-0.03em] text-text leading-none" style="font-size:{Math.round(size * 0.66)}px">fennoly</span>
+		<span class="font-bold tracking-[-0.03em] text-text leading-none" style="font-size:{Math.round(size * 0.66)}px">Fennoly</span>
 	{/if}
 </span>

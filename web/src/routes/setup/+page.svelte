@@ -2,10 +2,14 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api';
 	import { reportError } from '$lib/actions';
+	import { ChevronLeft } from '@lucide/svelte';
 	import AuthCard from '$lib/components/AuthCard.svelte';
+	import LanguagePicker from '$lib/components/LanguagePicker.svelte';
 	import { i18n, t } from '$lib/i18n/index.svelte';
 	import { adoptPreferences } from '$lib/stores.svelte';
 
+	/** The language comes first, so everything after it is in that language. */
+	let step = $state<'language' | 'account'>('language');
 	let displayName = $state('');
 	let username = $state('');
 	let password = $state('');
@@ -40,7 +44,16 @@
 
 <svelte:head><title>{t('setup.title')} · Fennoly</title></svelte:head>
 
+{#if step === 'language'}
+<AuthCard title="Choose your language · भाषा चुनें · भाषा निवडा" subtitle={t('setup.languageHint')} languages={false}>
+	<LanguagePicker />
+	<button class="btn-primary w-full h-12 text-base mt-5" onclick={() => (step = 'account')}>{t('tour.continue')}</button>
+</AuthCard>
+{:else}
 <AuthCard title={t('setup.title')} subtitle={t('setup.subtitle')}>
+	<button type="button" class="inline-flex items-center gap-1 text-sm text-primary font-medium -mt-2 mb-4" onclick={() => (step = 'language')}>
+		<ChevronLeft size={16} />{t('setup.changeLanguage')}
+	</button>
 	<form class="space-y-4" onsubmit={submit}>
 		<div>
 			<label class="label" for="name">{t('setup.displayName')}</label>
@@ -68,3 +81,4 @@
 		<button class="btn-primary w-full h-12 text-base mt-2" disabled={busy}>{t('setup.submit')}</button>
 	</form>
 </AuthCard>
+{/if}

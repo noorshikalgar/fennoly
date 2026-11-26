@@ -5,10 +5,11 @@ import { mr } from './mr';
 
 const dictionaries: Record<Locale, Record<MessageKey, string>> = { en, hi, mr };
 
-export const LANGUAGES: { code: Locale; label: string }[] = [
-	{ code: 'en', label: 'English' },
-	{ code: 'hi', label: 'हिंदी' },
-	{ code: 'mr', label: 'मराठी' }
+/** Each language named, and greeting, in itself, so anyone can find theirs. */
+export const LANGUAGES: { code: Locale; label: string; hello: string }[] = [
+	{ code: 'en', label: 'English', hello: "Hello! Let's get started." },
+	{ code: 'hi', label: 'हिंदी', hello: 'नमस्ते! चलिए शुरू करें।' },
+	{ code: 'mr', label: 'मराठी', hello: 'नमस्कार! चला, सुरुवात करूया.' }
 ];
 
 /** BCP 47 tags for number and date formatting (Indian conventions). */

@@ -41,6 +41,13 @@ HOME_ID=$(echo "$ME" | jget "['home_id']")
 FAMILY_ID=$(echo "$ME" | jget "['family_id']")
 [ "$(echo "$ME" | jget "['role']")" = "admin" ] || fail "setup creates admin"
 ok "setup created admin noor with home and family spaces"
+[ "$(echo "$ME" | jget "['tour_seen']")" = "False" ] && [ "$(echo "$ME" | jget "['checklist_hidden']")" = "False" ] || fail "new admin gets tour and checklist"
+P=$(api "$ADMIN" GET /api/me/progress)
+[ "$(echo "$P" | jget "['members']")" = "1" ] && [ "$(echo "$P" | jget "['family_items']")" = "0" ] || fail "progress: $P"
+[ "$(api "$ADMIN" PATCH /api/me '{"tour_seen":true,"checklist_hidden":true}' | jget "['tour_seen']")" = "True" ] || fail "tour seen"
+[ "$(api "$ADMIN" PATCH /api/me '{"tour_seen":false}' | jget "['tour_seen']")" = "False" ] || fail "tour again"
+api "$ADMIN" PATCH /api/me '{"tour_seen":true}' > /dev/null
+ok "the welcome tour and getting-started checklist: shown to a new admin, finished, shown again"
 
 curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' \
   -d '{"username":"x2","display_name":"x","password":"supersecret1"}' "$BASE/api/setup" | grep -q 409 || fail "second setup refused"
