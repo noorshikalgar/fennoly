@@ -13,7 +13,7 @@ A self-hosted family drive that is simple enough for everyone at home: store, fi
 ![SvelteKit](https://img.shields.io/badge/web-SvelteKit-ff3e00)
 ![Languages](https://img.shields.io/badge/languages-English%20·%20हिंदी%20·%20मराठी-0f6e56)
 
-[Website](https://noorshikalgar.github.io/fennoly/) · [Features](#features) · [Install](#install) · [Backups](docs/BACKUPS.md) · [Development](docs/DEVELOPMENT.md)
+[Website](https://noorshikalgar.github.io/fennoly/) · [Features](#features) · [On your phone](#on-your-phone) · [Install](#install) · [Compared](#how-fennoly-compares) · [Backups](docs/BACKUPS.md) · [Security](SECURITY.md)
 
 <br>
 
@@ -67,6 +67,7 @@ Fennoly does one thing: keep a family's documents safe, organised and easy to re
 - Each backup includes the database, so everything can be rebuilt on a new machine.
 - **Restore** any file or folder from any backup into a new folder; nothing is overwritten.
 - A monthly health check re-reads part of the stored data, and admins are warned if backups stop working.
+- **Proven, not promised:** a drill backs up to a folder, S3, SFTP and SMB, deletes files, restores them and compares them byte for byte; it also tries wrong passwords, a full disk and a restart mid-backup. [See the latest run: 41 checks passed](docs/BACKUPS.md#proof-that-backups-restore-the-drill).
 - Powered by [restic](https://restic.net) and [rclone](https://rclone.org). See [docs/BACKUPS.md](docs/BACKUPS.md).
 
 ### For the whole family
@@ -80,7 +81,42 @@ Fennoly does one thing: keep a family's documents safe, organised and easy to re
 - Passwords hashed with Argon2; repeated wrong passwords are locked out for longer and longer.
 - Uploaded files can never run code in the app, and the web app ships a strict Content-Security-Policy.
 - Backup passwords and keys are stored encrypted.
-- Tested with an attacker's mindset: [`scripts/pentest.sh`](scripts/pentest.sh) runs 138 checks (access to other people's files, public links, uploads, sessions, injection and more).
+- Tested with an attacker's mindset: [`scripts/pentest.sh`](scripts/pentest.sh) runs 138 checks (access to other people's files, public links, uploads, sessions, injection and more); [every check is explained](docs/SECURITY-CHECKS.md).
+- A written [threat model](docs/THREAT-MODEL.md): what is protected, from whom, how, and what is not.
+- Found a security problem? Report it privately, see [SECURITY.md](SECURITY.md).
+
+## On your phone
+
+Fennoly installs like a normal app (a PWA), straight from the browser: its own
+icon, full screen, no app store.
+
+| Phone | How to install |
+|---|---|
+| **Android** (Chrome, Edge, Samsung Internet) | Open Fennoly, then tap **Install** on the welcome tour or in Settings (or browser menu ⋮ → **Install app**). |
+| **iPhone / iPad** (Safari) | Tap **Share** ⎋, then **Add to Home Screen**. |
+| **Computer** (Chrome, Edge) | The install icon in the address bar, or Settings → **Install**. |
+
+On the phone you can photograph a document and upload it straight into the
+Family space, open any PDF or photo in the built-in viewer and swipe between
+them, and share a folder or make a link from its menu. Uploads keep going on
+a weak connection. Phones install web apps only from a secure address, so use
+HTTPS or Tailscale (see [Install](#install)).
+
+<div align="center">
+<img src="docs/screenshots/phones.webp" alt="Fennoly on phones in English, Hindi and Marathi" width="760">
+</div>
+
+## First steps
+
+1. **Pick your language.** The very first screen asks: English, हिंदी or मराठी.
+2. **Create the admin account.**
+3. A **welcome tour** explains My files (private) and the Family space,
+   uploading, sharing, backups and installing. Every new member gets it on
+   first sign-in, in their own language (chosen when the admin adds them, and
+   changeable as the tour's first step).
+4. A **getting-started checklist** on Home walks the admin through adding the
+   family, the first papers, a share, backups and installing on the phone;
+   each step ticks itself when done.
 
 ## Screenshots
 
@@ -130,6 +166,31 @@ docker compose -f deploy/docker-compose.yml up -d --build
 Open `http://<your-server-ip>:8686` and create the first account; it becomes the admin. Then add your family under **Family members**, and set up **Backups**.
 
 To reach Fennoly from outside your home, put it behind HTTPS (for example [Caddy](https://caddyserver.com)) or a VPN such as [Tailscale](https://tailscale.com), and set `FENNOLY_SECURE_COOKIES=true`.
+
+## How Fennoly compares
+
+Fennoly is for one family that wants its important papers in one simple,
+private place. Two excellent self-hosted projects are often suggested for the
+same job; they are made for different ones:
+
+| | Fennoly | Nextcloud | Paperless-ngx |
+|---|---|---|---|
+| Made for | a family's documents and photos | a complete cloud suite: files, calendar, contacts, office, hundreds of apps | archiving scanned paper: OCR, tags, correspondents, workflows |
+| Simple enough for parents and grandparents | ✅ the goal | many menus and apps | made for people who like tagging |
+| Running it | one image + PostgreSQL | a PHP app, a database, cron, caching; apps to keep updated | a stack with Redis and workers |
+| Files kept as ordinary folders on disk | ✅ with their real names | ✅ (changes made outside need a rescan) | its own archive layout |
+| Private space per person + a family space | ✅ | ✅ (with group folders) | owners and permissions |
+| Uploads that survive bad networks | ✅ resumable chunks | ✅ chunked | upload by browser, e-mail or a watched folder |
+| OCR and searching inside scans | planned | with apps | ✅ its core strength |
+| Encrypted backups built in (USB, NAS, SFTP, S3) | ✅ | external tools or apps | export, then your own backup |
+| English, हिंदी, मराठी | ✅ | community translations | community translations |
+
+Choose **Nextcloud** when you want a whole private cloud for many people and
+are happy to run it. Choose **Paperless-ngx** when you scan a lot of paper and
+want it OCR-ed, tagged and filed automatically. Choose **Fennoly** when the
+whole family, including the least technical, should just put papers in and
+find them again. They can live side by side: Fennoly's files are plain
+folders, so you can point other tools at them.
 
 ## Built with
 
