@@ -11,7 +11,7 @@ A self-hosted family drive that is simple enough for everyone at home: store, fi
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-0f6e56)](LICENSE)
 ![Rust](https://img.shields.io/badge/server-Rust-b7410e)
 ![SvelteKit](https://img.shields.io/badge/web-SvelteKit-ff3e00)
-![Languages](https://img.shields.io/badge/languages-English%20·%20हिंदी%20·%20मराठी-0f6e56)
+![Languages](https://img.shields.io/badge/languages-English%20%7C%20Hindi%20%7C%20Marathi-0f6e56)
 
 [Website](https://noorshikalgar.github.io/fennoly/) · [Features](#features) · [On your phone](#on-your-phone) · [Install](#install) · [Compared](#how-fennoly-compares) · [Backups](docs/BACKUPS.md) · [Security](SECURITY.md)
 
