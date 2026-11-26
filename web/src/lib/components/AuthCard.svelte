@@ -24,7 +24,7 @@
 		<div class="w-full max-w-md">
 			<div class="flex flex-col items-center mb-8 text-center">
 				<img src="/icons/icon.svg" alt="" class="size-16 mb-4 drop-shadow-lg" />
-				<div class="text-sm font-medium text-muted">Fennoly · {t('app.tagline')}</div>
+				<div class="text-sm font-medium text-muted"><span translate="no">Fennoly</span> · {t('app.tagline')}</div>
 			</div>
 			<div class="card p-6 sm:p-8">
 				<h1 class="text-2xl font-bold tracking-tight">{title}</h1>
