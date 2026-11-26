@@ -30,6 +30,7 @@ pub fn api() -> Router<AppState> {
         .route("/auth/logout", post(account::logout))
         .route("/me", get(account::me).patch(account::update_me))
         .route("/me/password", post(account::change_password))
+        .route("/me/progress", get(account::progress))
         .route("/users", get(account::directory))
         .route("/admin/users", get(admin::list).post(admin::create))
         .route("/admin/users/{id}", patch(admin::update).delete(admin::remove))

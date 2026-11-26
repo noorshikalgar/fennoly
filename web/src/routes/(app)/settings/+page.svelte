@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { Check, Monitor, Moon, Smartphone, Sun, Sunrise } from '@lucide/svelte';
+	import { Check, Monitor, Moon, Smartphone, Sparkles, Sun, Sunrise } from '@lucide/svelte';
+	import { goto } from '$app/navigation';
+	import InstallHelp from '$lib/components/InstallHelp.svelte';
+	import { install } from '$lib/install.svelte';
 	import { api } from '$lib/api';
 	import { reportError } from '$lib/actions';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { LANGUAGES, setLocale, t } from '$lib/i18n/index.svelte';
-	import { applyTheme, session, theme, toast } from '$lib/stores.svelte';
+	import { adoptPreferences, applyTheme, session, theme, toast } from '$lib/stores.svelte';
 	import type { Locale, ThemeChoice } from '$lib/types';
 	import { ui } from '$lib/ui.svelte';
 
@@ -13,20 +16,11 @@
 	let current = $state('');
 	let next = $state('');
 	let version = $state('');
-	let installEvent = $state<(Event & { prompt: () => Promise<void> }) | null>(null);
-	const standalone = typeof window !== 'undefined' && matchMedia('(display-mode: standalone)').matches;
-	const ios = typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 	$effect(() => {
 		ui.folder = null;
 		ui.space = null;
 		api.setupStatus().then((s) => (version = s.version)).catch(() => {});
-		const onPrompt = (e: Event) => {
-			e.preventDefault();
-			installEvent = e as typeof installEvent;
-		};
-		window.addEventListener('beforeinstallprompt', onPrompt);
-		return () => window.removeEventListener('beforeinstallprompt', onPrompt);
 	});
 
 	const themes: { id: ThemeChoice; label: () => string; icon: typeof Sun; swatch: string }[] = [
@@ -145,16 +139,19 @@
 
 	<section class="card p-5 sm:p-6">
 		<h2 class="font-semibold mb-2 flex items-center gap-2"><Smartphone size={18} />{t('settings.install')}</h2>
-		{#if standalone}
-			<p class="text-sm text-muted">{t('settings.installed')}</p>
-		{:else}
-			<p class="text-sm text-muted mb-4">{t('settings.installHint')}</p>
-			{#if installEvent}
-				<button class="btn-primary" onclick={() => installEvent?.prompt()}>{t('settings.installButton')}</button>
-			{:else if ios}
-				<p class="text-sm">{t('settings.installIos')}</p>
+		{#if !install.installed}<p class="text-sm text-muted mb-4">{t('settings.installHint')}</p>{/if}
+		<InstallHelp />
+	</section>
+
+	<section class="card p-5 sm:p-6">
+		<h2 class="font-semibold mb-2 flex items-center gap-2"><Sparkles size={18} />{t('tour.again')}</h2>
+		<p class="text-sm text-muted mb-4">{t('tour.againHint')}</p>
+		<div class="flex flex-wrap gap-2">
+			<button class="btn-outline" onclick={() => (ui.tour = true)}>{t('tour.againButton')}</button>
+			{#if me.role === 'admin' && me.checklist_hidden}
+				<button class="btn-outline" onclick={() => api.updateMe({ checklist_hidden: false }).then(adoptPreferences).then(() => goto('/')).catch(reportError)}>{t('start.showAgain')}</button>
 			{/if}
-		{/if}
+		</div>
 	</section>
 
 	<p class="text-center text-xs text-muted pb-6">{t('settings.version', { v: version })} · AGPL-3.0</p>

@@ -15,6 +15,8 @@ export const ui = $state<{
 	viewer: { items: FileNode[]; index: number } | null;
 	view: 'grid' | 'list';
 	sidebarOpen: boolean;
+	/** The welcome tour, opened again from Settings. */
+	tour: boolean;
 }>({
 	folder: null,
 	space: null,
@@ -30,7 +32,8 @@ export const ui = $state<{
 			return 'grid';
 		}
 	})(),
-	sidebarOpen: false
+	sidebarOpen: false,
+	tour: false
 });
 
 export function setView(view: 'grid' | 'list') {

@@ -10,6 +10,7 @@
 	import TopBar from '$lib/components/TopBar.svelte';
 	import UploadPanel from '$lib/components/UploadPanel.svelte';
 	import Viewer from '$lib/components/Viewer.svelte';
+	import WelcomeTour from '$lib/components/WelcomeTour.svelte';
 	import { api } from '$lib/api';
 	import { changes, session } from '$lib/stores.svelte';
 	import { ui } from '$lib/ui.svelte';
@@ -70,5 +71,10 @@
 	{/if}
 	{#if ui.compress}
 		<CompressDialog node={ui.compress} onclose={() => (ui.compress = null)} />
+	{/if}
+
+	<!-- First sign-in (or "show the tour again"): language first, then the basics. -->
+	{#if ui.tour || !session.me.tour_seen}
+		<WelcomeTour onclose={() => (ui.tour = false)} />
 	{/if}
 {/if}

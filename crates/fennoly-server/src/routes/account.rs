@@ -153,6 +153,10 @@ pub struct MeResponse {
     used_bytes: i64,
     home_id: Option<Uuid>,
     family_id: Option<Uuid>,
+    /// The welcome tour has been seen (or skipped).
+    tour_seen: bool,
+    /// The getting-started checklist was put away.
+    checklist_hidden: bool,
 }
 
 async fn me_for(state: &AppState, user_id: Uuid) -> AppResult<MeResponse> {
@@ -166,7 +170,12 @@ async fn me_for(state: &AppState, user_id: Uuid) -> AppResult<MeResponse> {
     .await?;
     let used_bytes = spaces::used_bytes(&state.db, user_id).await?;
     let (home_id, family_id) = spaces::roots(&state.db, user_id).await?;
-    Ok(MeResponse { user, used_bytes, home_id, family_id })
+    let (tour_seen, checklist_hidden): (bool, bool) =
+        sqlx::query_as("SELECT tour_seen_at IS NOT NULL, checklist_hidden_at IS NOT NULL FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_one(&state.db)
+            .await?;
+    Ok(MeResponse { user, used_bytes, home_id, family_id, tour_seen, checklist_hidden })
 }
 
 pub async fn me(State(state): State<AppState>, user: CurrentUser) -> AppResult<Json<MeResponse>> {
@@ -178,6 +187,9 @@ pub struct UpdateMe {
     display_name: Option<String>,
     locale: Option<String>,
     theme: Option<String>,
+    /// true: the tour is done; false: show it again.
+    tour_seen: Option<bool>,
+    checklist_hidden: Option<bool>,
 }
 
 pub async fn update_me(
@@ -213,7 +225,45 @@ pub async fn update_me(
             .execute(&state.db)
             .await?;
     }
+    if let Some(seen) = req.tour_seen {
+        sqlx::query("UPDATE users SET tour_seen_at = CASE WHEN $1 THEN now() END WHERE id = $2")
+            .bind(seen)
+            .bind(user.id)
+            .execute(&state.db)
+            .await?;
+    }
+    if let Some(hidden) = req.checklist_hidden {
+        sqlx::query("UPDATE users SET checklist_hidden_at = CASE WHEN $1 THEN now() END WHERE id = $2")
+            .bind(hidden)
+            .bind(user.id)
+            .execute(&state.db)
+            .await?;
+    }
     Ok(Json(me_for(&state, user.id).await?))
+}
+
+#[derive(Serialize)]
+pub struct Progress {
+    members: i64,
+    family_items: i64,
+    shares: i64,
+    backups: i64,
+}
+
+/// How far the family has got, for the getting-started checklist.
+pub async fn progress(State(state): State<AppState>, user: CurrentUser) -> AppResult<Json<Progress>> {
+    let (members, family_items, shares, backups): (i64, i64, i64, i64) = sqlx::query_as(
+        "SELECT (SELECT count(*) FROM users WHERE disabled_at IS NULL),
+                (SELECT count(*) FROM nodes n JOIN spaces s ON s.id = n.space_id
+                  WHERE s.kind = 'family' AND n.parent_id IS NOT NULL AND n.trashed_at IS NULL),
+                (SELECT count(*) FROM shares WHERE created_by = $1)
+                  + (SELECT count(*) FROM links WHERE created_by = $1),
+                (SELECT count(*) FROM backup_targets)",
+    )
+    .bind(user.id)
+    .fetch_one(&state.db)
+    .await?;
+    Ok(Json(Progress { members, family_items, shares, backups }))
 }
 
 #[derive(Deserialize)]

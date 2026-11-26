@@ -3,6 +3,7 @@
 	import { api, thumbUrl } from '$lib/api';
 	import { openNode, reportError } from '$lib/actions';
 	import FileIcon from '$lib/components/FileIcon.svelte';
+	import GettingStarted from '$lib/components/GettingStarted.svelte';
 	import { formatBytes, relativeTime } from '$lib/format';
 	import { t } from '$lib/i18n/index.svelte';
 	import { changes, session } from '$lib/stores.svelte';
@@ -48,6 +49,8 @@
 	<h1 class="text-2xl sm:text-3xl font-bold tracking-tight">{greeting}</h1>
 	<p class="text-muted mt-1">{t('home.subtitle')}</p>
 </section>
+
+{#if me.role === 'admin' && !me.checklist_hidden}<GettingStarted />{/if}
 
 <section class="grid sm:grid-cols-2 gap-3 mt-6">
 	<a href="/files/{me.home_id}" class="card p-4 flex items-center gap-4 hover:-translate-y-0.5 transition-transform">

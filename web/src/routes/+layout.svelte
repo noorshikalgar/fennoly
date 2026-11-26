@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { watchInstall } from '$lib/install.svelte';
 	import '../app.css';
 	import '@fontsource-variable/inter';
 	import '@fontsource/noto-sans-devanagari/400.css';
@@ -62,6 +63,17 @@
 	$effect(() => {
 		const path = page.url.pathname;
 		if (ready && !session.me && !PUBLIC.includes(path) && !isLinkPage(path)) goto('/login');
+	});
+
+	// The install prompt comes early; catch it for the Install buttons.
+	watchInstall();
+
+	// The service worker makes Fennoly installable and opens it without a
+	// connection. Only built apps have one; the dev server does not.
+	$effect(() => {
+		if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((e) => console.warn('service worker', e));
+		}
 	});
 </script>
 

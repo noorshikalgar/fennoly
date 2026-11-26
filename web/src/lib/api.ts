@@ -1,24 +1,4 @@
-import type {
-	AdminUser,
-	BackupEntry,
-	BackupOverview,
-	BackupRun,
-	BackupSnapshot,
-	BackupStatus,
-	BackupTarget,
-	BackupTargetInput,
-	FileNode,
-	Me,
-	NodeResponse,
-	PublicFolder,
-	PublicInfo,
-	Share,
-	SharedByMeItem,
-	SharedItem,
-	ShareLink,
-	ToolPreview,
-	UserSummary
-} from './types';
+import type { AdminUser, BackupEntry, BackupOverview, BackupRun, BackupSnapshot, BackupStatus, BackupTarget, BackupTargetInput, FileNode, Me, NodeResponse, Progress, PublicFolder, PublicInfo, Share, ShareLink, SharedByMeItem, SharedItem, ToolPreview, UserSummary } from './types';
 
 export class ApiError extends Error {
 	constructor(
@@ -65,7 +45,8 @@ export const api = {
 	login: (username: string, password: string) => post<Me>('/auth/login', { username, password }),
 	logout: () => post('/auth/logout'),
 	me: () => get<Me>('/me'),
-	updateMe: (b: Partial<Pick<Me, 'display_name' | 'locale' | 'theme'>>) => patch<Me>('/me', b),
+	updateMe: (b: Partial<Pick<Me, 'display_name' | 'locale' | 'theme' | 'tour_seen' | 'checklist_hidden'>>) => patch<Me>('/me', b),
+	progress: () => get<Progress>('/me/progress'),
 	changePassword: (current: string, next: string) => post('/me/password', { current, new: next }),
 	users: () => get<UserSummary[]>('/users'),
 
